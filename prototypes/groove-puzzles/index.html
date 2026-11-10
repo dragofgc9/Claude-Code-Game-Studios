@@ -77,12 +77,12 @@
 body[data-skin="ether"]{
   --font-display:"Cinzel","Times New Roman",serif; --font-logo:"UnifrakturMaguntia","Cinzel",serif;
   --font-label:"Cinzel","Times New Roman",serif; --font-num:"VT323",ui-monospace,Menlo,monospace; --num-size:1.28em; --label-track:.2em;
-  --world-base:#070616; --world-text:#f4f0ff; --world-ts:0 0 18px rgba(170,120,255,.75),0 2px 0 #1b1050;
+  --world-base:#0a0826; --world-text:#f4f0ff; --world-ts:0 0 18px rgba(170,120,255,.75),0 2px 0 #1b1050;
   --text:#f2f0ff; --text-dim:#b9b3ea; --accent:#6ff3ff; --focus:#3ff0ff;
-  --good-text:#6dff8a; --bad-text:#ff7aa8; --star:#ffe14d; --star-ts:0 0 10px rgba(255,225,77,.8),0 2px 0 #8a5a00; --star-empty:rgba(255,255,255,.25);
-  --panel-bg:linear-gradient(180deg,rgba(40,34,104,.80),rgba(12,10,42,.86));
-  --panel-rim:linear-gradient(135deg,rgba(63,240,255,.95),rgba(192,107,255,.75) 35%,rgba(255,107,240,.65) 62%,rgba(93,255,106,.8));
-  --panel-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 14px 40px rgba(8,0,40,.62),0 0 26px rgba(120,90,255,.2);
+  --good-text:#6dff8a; --bad-text:#ff7aa8; --star:#ffe14d; --star-ts:0 0 10px rgba(255,225,77,.8),0 2px 0 #8a5a00; --star-empty:rgba(200,230,255,.28);
+  --panel-bg:linear-gradient(180deg,rgba(26,74,140,.62),rgba(8,20,58,.80));
+  --panel-rim:linear-gradient(165deg,rgba(230,252,255,.95),rgba(63,240,255,.6) 28%,rgba(150,110,255,.75) 68%,rgba(93,255,106,.65));
+  --panel-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -10px 24px rgba(63,200,255,.08),0 14px 40px rgba(4,0,30,.6),0 0 22px rgba(63,200,255,.18);
   --radius-panel:18px; --radius-btn:14px; --radius-small:14px;
   --line:rgba(120,200,255,.26); --track:rgba(255,255,255,.12); --fill:linear-gradient(90deg,#3ff0ff,#c06bff,#ff6bf0);
   --tip-bg:linear-gradient(180deg,rgba(63,240,255,.16),rgba(192,107,255,.16)); --tip-rim:linear-gradient(135deg,#3ff0ff,#c06bff);
@@ -90,24 +90,24 @@ body[data-skin="ether"]{
   --warn-bg:linear-gradient(180deg,rgba(255,180,32,.22),rgba(255,120,32,.14)); --warn-rim:linear-gradient(135deg,#ffe14d,#ff8a1f);
   --bad-bg:linear-gradient(180deg,rgba(255,61,127,.26),rgba(120,20,80,.3)); --bad-rim:linear-gradient(135deg,#ff6b9d,#c06bff); --bad-ink:#ffd6e6;
   --opt-bg:linear-gradient(180deg,#fff6b0,#ffc21a); --opt-ink:#4a2a00; --opt-rim:#fff3a0;
-  --under:linear-gradient(#16123e,#100c30);
-  --btn-bg:linear-gradient(180deg,rgba(190,220,255,.34) 0%,rgba(110,140,255,.18) 49%,rgba(26,24,100,.5) 50%,rgba(70,110,255,.3) 100%);
-  --btn-rim:linear-gradient(135deg,#a8f9ff,#b78cff 50%,#ff9cf2);
-  --btn-text:#f6f4ff; --btn-ts:0 0 8px rgba(160,200,255,.65); --btn-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 14px rgba(20,0,80,.5),0 0 12px rgba(120,160,255,.22);
+  --under:linear-gradient(#0c1d4a,#081436);
+  --btn-bg:linear-gradient(180deg,rgba(170,240,255,.42) 0%,rgba(40,130,210,.30) 48%,rgba(6,30,74,.62) 52%,rgba(24,100,180,.42) 100%);
+  --btn-rim:linear-gradient(180deg,rgba(235,253,255,.98),rgba(90,210,255,.6) 52%,rgba(160,120,255,.75));
+  --btn-text:#f6f4ff; --btn-ts:0 1px 2px rgba(0,20,60,.8),0 0 8px rgba(120,220,255,.5); --btn-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -6px 10px rgba(63,240,255,.12),0 4px 14px rgba(0,10,50,.55),0 0 12px rgba(63,200,255,.25);
   --sel-bg:linear-gradient(180deg,#a9fcff 0%,#3fd8ff 49%,#0a86d0 50%,#29c4ff 100%); --sel-rim:linear-gradient(#e0feff,#7fe8ff);
   --sel-ts:0 1px 2px rgba(0,30,70,.8); --sel-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 0 16px rgba(63,240,255,.55);
   --go-bg:linear-gradient(180deg,#c2ffcb 0%,#4dfa6e 49%,#0fb53e 50%,#36e563 100%); --go-rim:linear-gradient(#e2ffe6,#7dffa0);
   --go-ts:0 1px 2px rgba(0,60,20,.8); --go-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 0 18px rgba(80,255,120,.55),0 4px 14px rgba(0,40,20,.5);
-  --busy-bg:linear-gradient(180deg,#ffc8f7 0%,#ff6bf0 49%,#c41fb0 50%,#f24fe0 100%); --busy-rim:linear-gradient(#ffe0fb,#ff9cf2);
-  --busy-ts:0 1px 2px rgba(70,0,60,.8);
+  --busy-bg:linear-gradient(180deg,#c2ffcb 0%,#4dfa6e 49%,#0fb53e 50%,#36e563 100%); --busy-rim:linear-gradient(#e2ffe6,#7dffa0);
+  --busy-ts:0 1px 2px rgba(0,60,20,.8);
   --orb-bg:radial-gradient(circle at 34% 28%,#fff 0 9%,rgba(255,255,255,0) 32%),conic-gradient(from 200deg,#3ff0ff,#c06bff,#ff6bf0,#ffe14d,#5dff6a,#3ff0ff); --orb-rim:#e8e4ff;
   --orb-done-bg:radial-gradient(circle at 34% 28%,#fff 0 9%,rgba(255,255,255,0) 32%),radial-gradient(circle at 50% 40%,#b8ffc2,#2fd657 55%,#0a7a2a); --orb-done-rim:#c2ffcb;
   --orb-off-bg:radial-gradient(circle at 50% 30%,#4a4580,#1c1a46); --orb-off-rim:#6b66a8;
   --check-off-bg:radial-gradient(circle at 50% 30%,rgba(255,255,255,.25),rgba(255,255,255,.05)); --check-off-rim:rgba(160,180,255,.6);
-  --lane-head-bg:linear-gradient(90deg,rgba(34,30,96,.97),rgba(16,14,52,.97)); --icon-ink:#eaf6ff;
-  --dock-bg:linear-gradient(180deg,rgba(34,28,98,.9),rgba(8,6,32,.94)); --dock-edge:rgba(63,240,255,.6); --dock-shadow:0 -8px 30px rgba(80,40,200,.35);
-  --scrim:rgba(5,3,20,.62); --dialog-bg:linear-gradient(180deg,rgba(36,30,98,.98),rgba(10,8,36,.98));
-  --dialog-foot:linear-gradient(180deg,rgba(28,24,80,.98),rgba(12,10,40,.99)); --dialog-title:#f4f0ff;
+  --lane-head-bg:linear-gradient(90deg,rgba(14,44,92,.97),rgba(8,22,58,.97)); --icon-ink:#eaf6ff;
+  --dock-bg:linear-gradient(180deg,rgba(24,70,136,.82),rgba(6,16,48,.92)); --dock-edge:rgba(63,240,255,.6); --dock-shadow:0 -8px 30px rgba(80,40,200,.35);
+  --scrim:rgba(5,3,20,.62); --dialog-bg:linear-gradient(180deg,rgba(24,62,124,.97),rgba(8,16,48,.98));
+  --dialog-foot:linear-gradient(180deg,rgba(18,48,100,.98),rgba(8,16,48,.99)); --dialog-title:#f4f0ff;
   --toast-bg:linear-gradient(180deg,#efeaff,#cdc6f5); --toast-text:#1a1440;
   --title-fill:linear-gradient(180deg,#fff 0%,#e4e9ff 34%,#8790d4 50%,#f6f7ff 57%,#aab3ea 100%);
   --title-filter:drop-shadow(0 2px 0 #2a1f6b) drop-shadow(0 0 16px rgba(170,120,255,.75));
@@ -145,7 +145,15 @@ body[data-skin="ether"] .ether{display:block}
 .ether .aurora{position:absolute;border-radius:50%;filter:blur(60px);opacity:.75;animation:drift 26s ease-in-out infinite alternate}
 .ether .a1{width:70vw;height:45vh;left:-15vw;top:-10vh;background:radial-gradient(closest-side,rgba(63,240,255,.55),rgba(63,240,255,0))}
 .ether .a2{width:60vw;height:50vh;right:-15vw;top:10vh;background:radial-gradient(closest-side,rgba(192,107,255,.6),rgba(192,107,255,0));animation-duration:32s}
-.ether .a3{width:55vw;height:40vh;left:20vw;bottom:8vh;background:radial-gradient(closest-side,rgba(93,255,106,.32),rgba(93,255,106,0));animation-duration:38s}
+.ether .a3{width:60vw;height:42vh;left:18vw;bottom:10vh;background:radial-gradient(closest-side,rgba(93,255,106,.42),rgba(93,255,106,0));animation-duration:38s}
+.ether .a4{width:80vw;height:38vh;left:-20vw;top:40vh;background:radial-gradient(closest-side,rgba(170,90,255,.55),rgba(170,90,255,0));animation-duration:44s}
+.ether .orb{position:absolute;left:var(--x);top:var(--y);width:var(--s);height:var(--s);border-radius:50%;animation:bob var(--d) ease-in-out var(--delay) infinite;
+  background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.95) 0 7%,rgba(255,255,255,.18) 18%,rgba(255,255,255,0) 42%),
+    radial-gradient(circle at 70% 78%,rgba(120,255,200,.35),rgba(0,0,0,0) 45%),
+    radial-gradient(circle,rgba(255,255,255,0) 58%,rgba(255,255,255,.08) 66%,rgba(0,0,0,0) 70%);
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55),inset 0 0 18px rgba(160,120,255,.45),inset -6px -8px 18px rgba(63,240,255,.35),0 0 18px rgba(120,200,255,.25)}
+.ether .lily{position:absolute;bottom:-3vh;width:min(22vw,150px);height:auto;filter:drop-shadow(0 0 10px rgba(255,107,240,.5))}
+.ether .lily.l1{left:1vw}.ether .lily.l2{right:2vw;transform:scaleX(-1) rotate(-6deg)}
 @keyframes drift{to{transform:translate(6vw,4vh) scale(1.12)}}
 .ether .spark{position:absolute;left:var(--x);top:var(--y);width:var(--s);height:var(--s);animation:twinkle var(--d) ease-in-out var(--delay) infinite}
 @keyframes twinkle{0%,100%{opacity:.25;transform:scale(.7) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
@@ -445,6 +453,29 @@ body[data-skin="ether"] .toast.bad::before{content:"error.exe";background:linear
   .skin-pick button{min-width:0;flex:1 1 0}
 }
 body[data-screen="title"] .logo{visibility:hidden}
+/* Ether: board-specific treatments */
+body[data-skin="ether"] #btn-play.playing{animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 0 30px rgba(80,255,120,.85),0 4px 14px rgba(0,40,20,.5)}}
+body[data-skin="ether"] .grid-scroll{border-width:3px;
+  box-shadow:0 0 0 6px rgba(140,225,255,.12),0 0 0 7px rgba(255,255,255,.18),0 0 34px rgba(63,240,255,.38),0 18px 44px rgba(0,0,40,.6)}
+body[data-skin="ether"] .title-pill{padding:6px 16px 6px 14px;border-radius:999px;border:1.5px solid transparent;
+  background:var(--panel-bg) padding-box,var(--panel-rim) border-box;box-shadow:var(--panel-shadow)}
+body[data-skin="ether"] .play-head h2{font-family:var(--font-body);font-weight:900;letter-spacing:0;color:#fff;-webkit-text-fill-color:#fff;background:none;filter:none;
+  text-shadow:0 0 12px rgba(120,220,255,.6)}
+body[data-skin="ether"] .lvl-num{font-family:var(--font-body);letter-spacing:.06em;font-size:14px;opacity:.85}
+body[data-skin="ether"] .beat-led{background:radial-gradient(circle at 35% 30%,#fff 0 12%,rgba(255,255,255,0) 35%),conic-gradient(#3ff0ff,#c06bff,#ff6bf0,#5dff6a,#3ff0ff);border-color:#e0f8ff}
+body[data-skin="ether"] .dialog::before{height:26px;content:"\2726  groove.exe";font:400 17px/26px var(--font-num);color:#fff;padding-left:12px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='16'%3E%3Cg fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M4 12h9'/%3E%3Crect x='27' y='3' width='10' height='9' rx='1'/%3E%3Cpath d='M51 3l9 9M60 3l-9 9'/%3E%3C/g%3E%3C/svg%3E") no-repeat right 12px center,linear-gradient(90deg,#1f3fd6,#5b8cff 45%,#9a4dff 75%,#ff6bf0)}
+body[data-skin="ether"] .dialog{position:relative}
+body[data-skin="ether"] .toast::before{background:linear-gradient(90deg,#1f3fd6,#5b8cff 45%,#9a4dff 75%,#ff6bf0)}
+.title-pill{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0}
+/* glass sliders with orb handles (both skins) */
+input[type=range]{-webkit-appearance:none;appearance:none;height:22px;background:transparent}
+input[type=range]::-webkit-slider-runnable-track{height:10px;border-radius:99px;background:linear-gradient(180deg,rgba(255,255,255,.55) 0 40%,rgba(255,255,255,0) 41%),var(--fill);box-shadow:inset 0 1px 3px rgba(0,0,0,.3),0 0 0 1px var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-6px;border-radius:50%;border:1px solid #fff;
+  background:radial-gradient(circle at 35% 30%,#fff 0 14%,rgba(255,255,255,0) 40%),var(--orb-bg);box-shadow:0 2px 6px rgba(0,30,80,.45),0 0 10px rgba(120,220,255,.5)}
+input[type=range]::-moz-range-track{height:10px;border-radius:99px;background:var(--fill)}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;border:1px solid #fff;background:var(--orb-bg)}
 body.rm *{animation:none!important;transition:none!important}
 body.rm .sky .bubbles,body.rm .ether .fly{display:none}
 @media (prefers-reduced-motion:reduce){ .sky .bubbles,.ether .fly{display:none} }
@@ -475,11 +506,15 @@ body.rm .sky .bubbles,body.rm .ether .fly{display:none}
         <stop offset=".58" stop-color="#f4f6ff"/><stop offset="1" stop-color="#a3adea"/></linearGradient>
       <linearGradient id="iri" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" stop-color="#6ff3ff"/><stop offset=".35" stop-color="#b78cff"/><stop offset=".65" stop-color="#ff9cf2"/><stop offset="1" stop-color="#7dffa0"/></linearGradient>
+      <linearGradient id="morpho" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#bdf6ff"/><stop offset=".4" stop-color="#3ff0ff"/><stop offset=".75" stop-color="#3b6cff"/><stop offset="1" stop-color="#1a1a8a"/></linearGradient>
+      <radialGradient id="lilyPetal" cx=".5" cy=".9" r="1"><stop offset="0" stop-color="#fff0fb"/><stop offset=".55" stop-color="#ff8ad8"/><stop offset="1" stop-color="#d62fa8"/></radialGradient>
       <linearGradient id="spire" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="#2c1c70"/><stop offset="1" stop-color="#0b0726"/></linearGradient>
     </defs>
   </svg>
-  <div class="aurora a1"></div><div class="aurora a2"></div><div class="aurora a3"></div>
+  <div class="aurora a1"></div><div class="aurora a2"></div><div class="aurora a3"></div><div class="aurora a4"></div>
+  <div id="orbs"></div>
   <svg class="arcane" viewBox="0 0 200 200" fill="none" stroke-linecap="round">
     <circle cx="100" cy="100" r="96" stroke="#b78cff" stroke-width=".8"/>
     <circle cx="100" cy="100" r="90" stroke="#6ff3ff" stroke-width=".5" stroke-dasharray="1.5 3.5"/>
@@ -512,6 +547,22 @@ body.rm .sky .bubbles,body.rm .ether .fly{display:none}
   <svg class="castle right" viewBox="0 0 400 260"><path d="M0 260 L0 170 L20 170 L20 120 L30 90 L40 120 L40 170 L60 170 L60 100 L72 40 L84 100 L84 160 L110 160 L110 130 L120 110 L130 130 L130 160 L150 160 L150 70 L165 8 L180 70 L180 150 L205 150 L205 115 L215 95 L225 115 L225 150 L250 150 L250 90 L262 55 L274 90 L274 165 L300 165 L300 135 L310 118 L320 135 L320 175 L350 175 L350 150 L358 135 L366 150 L366 185 L400 185 L400 260 Z" fill="url(#spire)" stroke="#6ff3ff" stroke-opacity=".45" stroke-width="1.2"/>
     <g fill="#ff9cf2" opacity=".8"><rect x="161" y="80" width="6" height="12" rx="3"/><rect x="258" y="100" width="5" height="10" rx="2.5"/></g></svg>
   <div id="flies"></div>
+  <svg class="lily l1" viewBox="0 0 120 120">
+    <path d="M62 120 C58 90 54 70 46 52" stroke="#2fd657" stroke-width="3" fill="none"/>
+    <path d="M60 118 C30 100 18 86 8 70 C30 74 46 86 60 118Z" fill="#2fd657" opacity=".85"/><path d="M64 118 C84 96 98 90 116 86 C100 104 86 112 64 118Z" fill="#1fae45" opacity=".8"/>
+    <g transform="translate(46 50)"><g fill="url(#lilyPetal)" stroke="#fff" stroke-opacity=".6" stroke-width=".8">
+      <path d="M0 0 C-6 -16 -4 -34 2 -46 C8 -32 8 -14 0 0Z"/><path d="M0 0 C-16 -8 -32 -10 -44 -4 C-30 4 -14 6 0 0Z"/><path d="M0 0 C14 -10 30 -14 42 -10 C30 -2 14 2 0 0Z"/>
+      <path d="M0 0 C-10 -14 -22 -24 -34 -26 C-26 -14 -14 -4 0 0Z"/><path d="M0 0 C10 -14 20 -26 30 -30 C24 -16 14 -6 0 0Z"/></g>
+      <path d="M0 0 L-4 -20 M0 0 L4 -19 M0 0 L-10 -16" stroke="#ffe14d" stroke-width="1.2"/><circle cx="-4" cy="-20" r="1.8" fill="#ff8a1f"/><circle cx="4" cy="-19" r="1.8" fill="#ff8a1f"/></g>
+  </svg>
+  <svg class="lily l2" viewBox="0 0 120 120">
+    <path d="M62 120 C58 90 54 70 46 52" stroke="#2fd657" stroke-width="3" fill="none"/>
+    <path d="M60 118 C30 100 18 86 8 70 C30 74 46 86 60 118Z" fill="#2fd657" opacity=".85"/><path d="M64 118 C84 96 98 90 116 86 C100 104 86 112 64 118Z" fill="#1fae45" opacity=".8"/>
+    <g transform="translate(46 50)"><g fill="url(#lilyPetal)" stroke="#fff" stroke-opacity=".6" stroke-width=".8">
+      <path d="M0 0 C-6 -16 -4 -34 2 -46 C8 -32 8 -14 0 0Z"/><path d="M0 0 C-16 -8 -32 -10 -44 -4 C-30 4 -14 6 0 0Z"/><path d="M0 0 C14 -10 30 -14 42 -10 C30 -2 14 2 0 0Z"/>
+      <path d="M0 0 C-10 -14 -22 -24 -34 -26 C-26 -14 -14 -4 0 0Z"/><path d="M0 0 C10 -14 20 -26 30 -30 C24 -16 14 -6 0 0Z"/></g>
+      <path d="M0 0 L-4 -20 M0 0 L4 -19 M0 0 L-10 -16" stroke="#ffe14d" stroke-width="1.2"/><circle cx="-4" cy="-20" r="1.8" fill="#ff8a1f"/><circle cx="4" cy="-19" r="1.8" fill="#ff8a1f"/></g>
+  </svg>
 </div>
 <div class="bg-pulse" id="bg-pulse" aria-hidden="true"></div>
 <div id="app">
@@ -551,8 +602,7 @@ body.rm .sky .bubbles,body.rm .ether .fly{display:none}
   <section id="screen-play" hidden>
     <div class="play-head">
       <button id="btn-back" aria-label="Back to levels">←<span class="lbl"> Levels</span></button>
-      <span class="lvl-num" id="lvl-num"></span>
-      <h2 id="lvl-name"></h2>
+      <div class="title-pill"><span class="lvl-num" id="lvl-num"></span><h2 id="lvl-name"></h2></div>
       <span class="badge" id="lvl-kind"></span>
       <button id="btn-help2" class="phone-only" aria-label="Help and glossary" style="margin-left:auto">?</button>
       <div class="meta"><span id="lvl-bpm"></span><span id="lvl-swing"></span><span id="lvl-steps"></span></div>
@@ -1667,9 +1717,9 @@ const SKINS = {
       hatch:'rgba(11,53,86,0.10)', locked:'rgba(11,53,86,0.035)', pulse:'25,179,239', overlay:'rgba(255,255,255,0.62)', overlayText:'#0b3556' } },
   ether: { label:'Ether', themeColor:'#070616', particle:'spark', noteGlow:true,
     lanes:{ kick:'#ff3d7f', snare:'#ffb020', clap:'#ffe14d', hat:'#3ff0ff', ohat:'#5b8cff', perc:'#c06bff', bass:'#5dff6a', lead:'#ff6bf0' },
-    board:{ bgTop:'#141a52', bgBottom:'#070a26', beatShade:'rgba(110,150,255,0.06)', laneTint:0.07, homeTint:0.14,
+    board:{ bgTop:'#0e3462', bgBottom:'#061430', beatShade:'rgba(110,150,255,0.06)', laneTint:0.07, homeTint:0.14,
       laneEdge:'rgba(120,200,255,0.38)', rowEdge:'rgba(120,200,255,0.10)', bar:'#3ff0ff', barGlow:'#3ff0ff', beat:'rgba(140,200,255,0.38)', step:'rgba(140,200,255,0.12)',
-      rulerTop:'#24307a', rulerBottom:'#0f1544', rulerShine:'rgba(255,255,255,0.10)', rulerBar:'#f2f8ff', rulerBeat:'#9fd8ff', rulerAnd:'#5f7bb8',
+      rulerTop:'#1a4f8e', rulerBottom:'#0b2452', rulerShine:'rgba(255,255,255,0.10)', rulerBar:'#f2f8ff', rulerBeat:'#9fd8ff', rulerAnd:'#5f7bb8',
       rulerFont:'400 19px VT323, ui-monospace, monospace', playhead:'#3ff0ff', playheadTarget:'#ff6bf0', ink:'#ffffff',
       hatch:'rgba(255,255,255,0.08)', locked:'rgba(0,0,0,0.18)', pulse:'160,110,255', overlay:'rgba(7,6,22,0.62)', overlayText:'#f4f0ff' } },
 };
@@ -1782,7 +1832,7 @@ function onStepVisual(ev){
   for (const n of S.notes) if (n.step === ev.step && audible(n.lane)){
     S.flash.set(key(n), now);
     const r = rowY(n.lane, LANES[n.lane].pitched ? n.pitch : 0);
-    if (r && (n.vel === 3 || Math.random() < (SKIN.particle === 'spark' ? 0.35 : 0.6))) spawnParticles(n.step*G.cw + G.cw/2, r.y + r.h/2, LANES[n.lane].color, n.vel === 3 ? 2 : 1);
+    if (r && (n.vel === 3 || Math.random() < (SKIN.particle === 'spark' ? 0.25 : 0.6))) spawnParticles(n.step*G.cw + G.cw/2, r.y + r.h/2, LANES[n.lane].color, n.vel === 3 ? 2 : 1);
   }
 }
 /** A four-point chrome sparkle (the Ether particle). */
@@ -1880,9 +1930,9 @@ function drawGrid(){
   if (!rm){
     for (let i = S.particles.length - 1; i >= 0; i--){
       const p = S.particles[i];
-      p.wob += 0.15; p.x += p.vx + Math.sin(p.wob)*0.25; p.y += p.vy; p.vy -= 0.01; p.life -= 0.024;
+      p.wob += 0.15; p.x += p.vx + Math.sin(p.wob)*0.25; p.y += p.vy; p.vy -= 0.01; p.life -= SKIN.particle === 'spark' ? 0.034 : 0.024;
       if (p.life <= 0 || p.y < -10){ S.particles.splice(i, 1); continue; }
-      if (SKIN.particle === 'spark'){ drawSparkle(p.x, p.y, p.r*1.5, p.color, p.life, p.wob); continue; }
+      if (SKIN.particle === 'spark' && p.r > 4.5){ drawSparkle(p.x, p.y, p.r*1.5, p.color, p.life, p.wob); continue; }   // Ether: big ones sparkle, small ones are glass bubbles
       g2.beginPath(); g2.arc(p.x, p.y, p.r, 0, Math.PI*2);
       g2.fillStyle = hexA(p.color, 0.16*p.life); g2.fill();
       g2.lineWidth = 1.2; g2.strokeStyle = hexA(p.color, 0.65*p.life); g2.stroke();
@@ -2591,12 +2641,19 @@ function boot(){
     d.innerHTML = '<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M12 0C12.8 8 16 11.2 24 12C16 12.8 12.8 16 12 24C11.2 16 8 12.8 0 12C8 11.2 11.2 8 12 0Z" fill="url(#chrome)" stroke="#ffffff" stroke-opacity=".5" stroke-width=".4"/></svg>';
     sparks.appendChild(d);
   }
+  const orbs = $('orbs');
+  for (let i = 0; i < 7; i++){
+    const d = document.createElement('div'), sz = 34 + Math.random()*70; d.className = 'orb';
+    d.style.cssText = `--x:${(Math.random() < .5 ? Math.random()*12 : 82 + Math.random()*12).toFixed(1)}%;--y:${(8 + Math.random()*70).toFixed(1)}%;--s:${sz.toFixed(0)}px;` +
+      `--d:${(6 + Math.random()*6).toFixed(1)}s;--delay:${(-Math.random()*6).toFixed(1)}s`;
+    orbs.appendChild(d);
+  }
   const flies = $('flies');
   for (let i = 0; i < 5; i++){
     const d = document.createElement('div'); d.className = 'fly';
     d.style.cssText = `--x:${(Math.random() < .5 ? 1 + Math.random()*10 : 86 + Math.random()*9).toFixed(1)}%;--y:${(15 + Math.random()*60).toFixed(1)}%;--d:${(7 + Math.random()*6).toFixed(1)}s;--delay:${(-Math.random()*8).toFixed(1)}s;` +
       `--dx:${(Math.random()*40 - 20).toFixed(0)}px;--dy:${(Math.random()*120 - 60).toFixed(0)}px`;
-    d.innerHTML = '<svg viewBox="0 0 34 28"><path d="M17 14C12 2 2 0 2 8s8 9 15 6zM17 14c5-12 15-14 15-6s-8 9-15 6zM17 14c-4 3-11 4-11 9s7 3 11-9zM17 14c4 3 11 4 11 9s-7 3-11-9z" fill="url(#iri)" stroke="#fff" stroke-opacity=".7" stroke-width=".6"/><path d="M17 8v14" stroke="#1a1440" stroke-width="1.6" stroke-linecap="round"/></svg>';
+    d.innerHTML = '<svg viewBox="0 0 34 28"><path d="M17 14C12 2 2 0 2 8s8 9 15 6zM17 14c5-12 15-14 15-6s-8 9-15 6zM17 14c-4 3-11 4-11 9s7 3 11-9zM17 14c4 3 11 4 11 9s-7 3-11-9z" fill="url(#morpho)" stroke="#fff" stroke-opacity=".7" stroke-width=".6"/><path d="M17 8v14" stroke="#1a1440" stroke-width="1.6" stroke-linecap="round"/></svg>';
     flies.appendChild(d);
   }
   applySkin(S.save.settings.skin || 'aero');

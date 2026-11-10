@@ -8,6 +8,8 @@ any music theory.
   sky, glass panels, glossy buttons, jelly notes and bubbles. Every level teaches one named idea
   ("New idea" strip, "You learned" on the results), and levels are grouped into four chapters.
   See `ART-DIRECTION.md`.
+- **Skins:** Daylight (default, kids) and Ether (eccentric: iridescent liquid glass, chrome type, an
+  underground fantasy world), both from one token-based design system. See `DESIGN-SYSTEM.md`.
 - **Hypothesis:** placing notes on a grid against live, plain-English rules
   (with an honest groove score) is fun and teaches rhythm without theory.
 - **Run it:** open `index.html` in a modern browser. It has no build step, no
