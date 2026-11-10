@@ -125,6 +125,52 @@ const out=[]; const ok=(c,m)=>out.push((c?'PASS ':'FAIL ')+m);
   const fit = await q.evaluate(()=>{ const s=document.getElementById('grid-scroll'); return {sw:s.scrollWidth, cw:s.clientWidth}; });
   ok(true, `phone 16-step grid: content ${fit.sw}px in ${fit.cw}px viewport`);
   await q.screenshot({path:'shots/phone-fix.png'});
+  // --- iPhone layout: dock, compact header, confirm dialog ---
+  await q.evaluate(()=>GP.openLevel(4)); await q.waitForTimeout(150);
+  ok(!(await q.isVisible('.topbar')), 'phone: global top bar hidden while playing');
+  const dock = await q.locator('#dock').boundingBox();
+  ok(Math.abs(dock.y + dock.height - 844) < 2 && dock.width >= 389, `phone: dock pinned to the bottom edge (y=${dock.y.toFixed(0)}, h=${dock.height.toFixed(0)})`);
+  ok((await q.textContent('#btn-goals')).trim()==='Goals 0/4', 'phone: dock shows goal progress: '+(await q.textContent('#btn-goals')));
+  await q.tap('#btn-tool'); ok(await q.evaluate(()=>GP.state.tool==='move'), 'phone: tool button cycles to Move');
+  await q.tap('#btn-tool'); ok(await q.evaluate(()=>GP.state.tool==='draw'), 'phone: and back to Draw');
+  const wasPlaying = await q.evaluate(()=>GP.Seq.playing); await q.tap('#btn-play');
+  ok(await q.evaluate(w=>GP.Seq.playing===!w, wasPlaying), 'phone: dock Play toggles the loop'); if (wasPlaying) await q.tap('#btn-play');
+  const gb2 = await q.locator('#grid').boundingBox(); const rowH = await q.evaluate(()=>GP.state&&46);
+  await q.tap('#grid', {position:{x: gb2.width/16*7.5, y: 24 + 23}});   // remove kick on step 8
+  ok(await q.evaluate(()=>!GP.state.notes.some(n=>n.lane==='kick'&&n.step===7)), 'phone: tap on a 46px-tall row removes the kick');
+  ok(await q.evaluate(()=>document.getElementById('lvl-intro').classList.contains('collapsed')), 'phone: intro collapses after the first edit');
+  await q.tap('#btn-reset'); ok(await q.isVisible('#m-yes'), 'phone: reset asks in-page (no window.confirm)');
+  await q.tap('#m-yes'); ok(await q.evaluate(()=>GP.state.notes.some(n=>n.lane==='kick'&&n.step===7)), 'phone: confirmed reset restores the loop');
+  await q.evaluate(()=>{ GP.applySolution(); });
+  ok((await q.textContent('#btn-goals')).startsWith('Finish'), 'phone: dock button turns into Finish when solved');
+  await q.tap('#btn-goals'); ok(await q.isVisible('#m-next'), 'phone: Finish opens the results');
+  await q.screenshot({path:'shots/phone-results.png'});
+  await q.tap('#m-keep');
+  const sw2 = await q.evaluate(()=>({doc:document.documentElement.scrollWidth, vw:innerWidth}));
+  ok(sw2.doc<=sw2.vw, `phone: still no sideways page scroll (${sw2.doc} <= ${sw2.vw})`);
+  await q.screenshot({path:'shots/phone-play.png'});
+  // landscape phone
+  await q.setViewportSize({width:844, height:390}); await q.evaluate(()=>GP.openLevel(11)); await q.waitForTimeout(200);
+  const cwL = await q.evaluate(()=>document.getElementById('grid').clientWidth/32);
+  ok(await q.isVisible('#btn-goals') && cwL >= 20, `landscape phone: dock layout, 2-bar grid cells ${cwL.toFixed(1)}px`);
+  await q.screenshot({path:'shots/phone-landscape.png'});
+  ok(errs2.length===0, 'phone: no errors '+JSON.stringify(errs2));
+  // --- Home Screen app: service worker caches the app; reload works offline ---
+  const http = require('http'), fs = require('fs'); const root = path.resolve(__dirname, '..');
+  const types = {'.html':'text/html','.js':'text/javascript','.webmanifest':'application/manifest+json','.png':'image/png'};
+  const srv = http.createServer((rq, rs) => { let f = decodeURIComponent(rq.url.split('?')[0]); if (f.endsWith('/')) f += 'index.html';
+    const fp = path.join(root, f); if (!fp.startsWith(root) || !fs.existsSync(fp)) { rs.writeHead(404); return rs.end(); }
+    rs.writeHead(200, {'Content-Type': types[path.extname(fp)] || 'application/octet-stream'}); fs.createReadStream(fp).pipe(rs); });
+  await new Promise(r => srv.listen(0, r)); const port = srv.address().port;
+  const ctx3 = await b.newContext({viewport:{width:390,height:844}}); const w = await ctx3.newPage();
+  await w.goto(`http://localhost:${port}/`);
+  const swOk = await w.evaluate(async()=>{ const reg = await navigator.serviceWorker.ready; return !!reg.active; });
+  ok(swOk, 'service worker installs');
+  const man = await w.evaluate(async()=>{ const r = await fetch(document.querySelector('link[rel=manifest]').href); const j = await r.json(); return j.display + ' / ' + j.icons.length; });
+  ok(man === 'standalone / 3', 'manifest loads: '+man);
+  await w.waitForTimeout(500); await ctx3.setOffline(true); await w.reload();
+  ok(await w.evaluate(()=>!!window.GP && GP.LEVELS.length===18), 'reloads with the network off (offline from the Home Screen)');
+  await ctx3.close(); srv.close();
   ok(errs2.length===0, 'phone: no errors '+JSON.stringify(errs2));
   console.log(out.join('\n'));
   await b.close();

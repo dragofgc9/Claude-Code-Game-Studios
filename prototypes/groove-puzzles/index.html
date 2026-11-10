@@ -5,8 +5,17 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Groove Puzzles</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<!-- iOS home-screen app (PWA) -->
+<meta name="theme-color" content="#0b0d17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Grooves">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="description" content="Fix, rebuild and finish beats on a piano-roll grid. A rhythm logic puzzle; no music theory needed.">
 <style>
 /* =====================================================================
@@ -20,10 +29,13 @@
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+/* safe areas: content clears the notch / home indicator when run full-screen from the Home Screen */
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html,body{margin:0;background:var(--bg);color:var(--text);
-  font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  -webkit-tap-highlight-color:transparent}
-body{min-height:100vh;overflow-x:hidden}
+  font:15px/1.45 -apple-system,system-ui,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;overscroll-behavior:none;touch-action:manipulation}
+body{min-height:100%;overflow-x:hidden}
+.topbar,#screen-play,#screen-levels,.title-screen{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 button,select,input{font:inherit;color:inherit}
 button{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 12px;
@@ -37,7 +49,10 @@ button[aria-pressed="true"]{background:#2d2560;border-color:var(--accent)}
 .btn-primary:hover:not(:disabled){background:linear-gradient(135deg,#8a68ff,#c070ff)}
 .bg-pulse{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0;
   background:radial-gradient(ellipse at 50% 30%,rgba(140,108,255,.22),transparent 65%)}
-#app{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:10px 16px 40px}
+#app{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding-block:10px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.phone-only{display:none}
+.install{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;max-width:420px;margin:18px auto 0;font-size:14px;color:var(--text)}
 
 /* top bar */
 .topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0 10px}
@@ -85,6 +100,7 @@ button[aria-pressed="true"]{background:#2d2560;border-color:var(--accent)}
   padding:10px 12px;margin:10px 0;max-width:900px}
 .intro b{color:#fff}
 .transport{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.dock,.actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .transport .sep{width:1px;height:28px;background:var(--line);margin:0 4px}
 #btn-play{min-width:104px;font-weight:700}
 #btn-play.playing{background:#14332a;border-color:var(--good)}
@@ -174,16 +190,46 @@ button[aria-pressed="true"]{background:#2d2560;border-color:var(--accent)}
 .toast.bad{background:#46182a;border-color:var(--bad)}
 .toast.good{background:#123626;border-color:var(--good)}
 
-@media (max-width:900px){ .main{grid-template-columns:1fr} }
-@media (max-width:600px){
-  :root{--headw:66px}
-  #app{padding:8px 10px 30px}
+@media (max-width:1000px){ .main{grid-template-columns:1fr} }
+/* ---- Phone layout (portrait, or landscape on a short screen): thumb dock at the bottom ---- */
+@media (max-width:600px), (max-height:500px) and (orientation:landscape){
+  :root{--headw:54px}
+  body[data-screen="play"] .topbar{display:none}
+  .phone-only{display:block}
+  .desk-only{display:none!important}
+  #app{padding-block:8px calc(92px + env(safe-area-inset-bottom,0px))}
+  .play-head{gap:6px 8px}
+  .play-head h2{font-size:18px}
+  #btn-back .lbl{display:none}
+  #btn-back,#btn-help2{min-width:42px;min-height:40px;padding:4px 10px}
+  .meta{width:100%;margin-left:0;gap:4px}
+  .meta span{font-size:12px;padding:2px 6px}
+  .intro{font-size:14px;margin:8px 0;padding:8px 10px}
+  .intro.collapsed{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;
+    padding-block:0;border-top:8px solid transparent;border-bottom:8px solid transparent}
+  .transport{margin:6px 0}
+  .transport .sep{display:none}
+  .actions{width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .actions::-webkit-scrollbar{display:none}
+  .actions button{flex:none;padding:6px 10px;font-size:14px;min-height:40px}
+  .dock{position:fixed;left:0;right:0;bottom:0;z-index:40;flex-wrap:nowrap;gap:6px;
+    padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+    background:rgba(13,16,34,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+  .dock button{flex:1 1 0;min-width:0;min-height:50px;padding:6px 4px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dock .lbl{display:none}
+  .dock #btn-play{flex:1.25 1 0}
+  .dock #btn-undo,.dock #btn-redo,.dock #btn-tool{flex:.8 1 0}
+  .dock #btn-goals{flex:2 1 0}
+  .lane-head{padding:2px 4px}
   .lane-head .nm{font-size:11px}
   .lane-head .tag{display:none}
-  .play-head h2{font-size:18px}
-  .meta{margin-left:0}
-  .transport button{padding:6px 8px;font-size:13px;min-height:36px}
-  .transport .sep{display:none}
+  .lane-head .ms button{min-height:22px;padding:0 5px}
+  .lane-head.pitched{padding-right:20px}
+  .lane-head.pitched .ms{flex-direction:column;align-items:flex-start}
+  .grid-help{display:none}
+  .sandbox-bar select{font-size:16px}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .dialog{max-height:calc(100% - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
 }
 body.rm *{animation:none!important;transition:none!important}
 </style>
@@ -206,6 +252,7 @@ body.rm *{animation:none!important;transition:none!important}
     <h1>GROOVE<br>PUZZLES</h1>
     <p>You're the producer. Fix broken beats, rebuild ones you hear, and finish loops. Tap the grid to place sounds. No music theory needed.</p>
     <button class="btn-primary" id="btn-start">▶ Start</button>
+    <p class="install" id="install-hint" hidden>📲 <b>Make it an app:</b> tap <b>Share</b>, then <b>Add to Home Screen</b>. It opens full-screen and works offline.</p>
     <div class="title-grid" id="title-grid" aria-hidden="true"></div>
   </section>
 
@@ -219,10 +266,11 @@ body.rm *{animation:none!important;transition:none!important}
   <!-- Play -->
   <section id="screen-play" hidden>
     <div class="play-head">
-      <button id="btn-back" aria-label="Back to levels">← Levels</button>
+      <button id="btn-back" aria-label="Back to levels">←<span class="lbl"> Levels</span></button>
       <span class="lvl-num" id="lvl-num"></span>
       <h2 id="lvl-name"></h2>
       <span class="badge" id="lvl-kind"></span>
+      <button id="btn-help2" class="phone-only" aria-label="Help and glossary" style="margin-left:auto">?</button>
       <div class="meta"><span id="lvl-bpm"></span><span id="lvl-swing"></span><span id="lvl-steps"></span></div>
     </div>
     <p class="intro" id="lvl-intro"></p>
@@ -233,19 +281,25 @@ body.rm *{animation:none!important;transition:none!important}
       <button id="sb-clear">Clear grid</button>
     </div>
     <div class="transport" role="toolbar" aria-label="Transport and tools">
-      <button id="btn-play" aria-pressed="false" title="Play or stop (P)">▶ Play</button>
-      <button id="btn-target" title="Hear the hidden target (T)">🎧 Hear target</button>
-      <button id="btn-check" title="Compare your beat with the target">Check</button>
+      <!-- The dock is inline on desktop and a fixed bottom bar (thumb zone) on phones -->
+      <div class="dock" id="dock">
+        <button id="btn-play" aria-pressed="false" title="Play or stop (P)">▶ Play</button>
+        <button id="btn-undo" title="Undo (Ctrl+Z)" aria-label="Undo">↶<span class="lbl"> Undo</span></button>
+        <button id="btn-redo" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷<span class="lbl"> Redo</span></button>
+        <button id="btn-tool" class="phone-only" aria-label="Change tool"></button>
+        <button id="btn-goals" class="phone-only"></button>
+      </div>
       <span class="sep"></span>
-      <button id="btn-undo" title="Undo (Ctrl+Z)">↶ Undo</button>
-      <button id="btn-redo" title="Redo (Ctrl+Shift+Z)">↷ Redo</button>
-      <button id="btn-reset" title="Start this level over">Reset</button>
-      <span class="sep"></span>
-      <button id="btn-hint" title="Show a hint">💡 Hint</button>
-      <button id="btn-reveal" title="Reveal one note of the target (costs ★★★)">Reveal a note</button>
-      <span class="sep"></span>
-      <div class="tools" id="tools" role="radiogroup" aria-label="Tools"></div>
-      <span class="beat-led" id="beat-led" aria-hidden="true"></span>
+      <div class="actions">
+        <button id="btn-target" title="Hear the hidden target (T)">🎧 Hear target</button>
+        <button id="btn-check" title="Compare your beat with the target">Check</button>
+        <button id="btn-reveal" title="Reveal one note of the target (costs ★★★)">Reveal a note</button>
+        <button id="btn-hint" title="Show a hint">💡 Hint</button>
+        <button id="btn-reset" title="Start this level over">Reset</button>
+        <span class="sep"></span>
+        <div class="tools desk-only" id="tools" role="radiogroup" aria-label="Tools"></div>
+        <span class="beat-led" id="beat-led" aria-hidden="true"></span>
+      </div>
     </div>
     <div class="budget" id="budget" aria-live="polite"></div>
     <div class="main">
@@ -284,15 +338,15 @@ body.rm *{animation:none!important;transition:none!important}
    1. CONSTANTS: lanes, kinds, tools, velocities
    ===================================================================== */
 const LANES = {
-  kick:  { name:'Kick',     color:'#ff5d73', gain:0.95, desc:'The deep thump that anchors the beat.' },
-  snare: { name:'Snare',    color:'#ffb347', gain:0.6,  desc:'The sharp crack, usually on beats 2 and 4.' },
-  clap:  { name:'Clap',     color:'#ffe066', gain:0.55, desc:'A hand-clap snap; often takes the snare\'s job.' },
-  hat:   { name:'Hat',      color:'#4fe3e0', gain:0.32, desc:'Closed hi-hat: a short "tss" that keeps time.' },
-  ohat:  { name:'Open hat', color:'#4c9dff', gain:0.28, desc:'A hi-hat left ringing: a longer "tsssh".' },
-  perc:  { name:'Perc',     color:'#c08bff', gain:0.4,  desc:'A woody tick for extra bounce.' },
-  bass:  { name:'Bass',     color:'#5dff9a', gain:0.55, pitched:true, midi:[36,39,41,43,46,48],
+  kick:  { name:'Kick', short:'Kick',     color:'#ff5d73', gain:0.95, desc:'The deep thump that anchors the beat.' },
+  snare: { name:'Snare', short:'Snr',    color:'#ffb347', gain:0.6,  desc:'The sharp crack, usually on beats 2 and 4.' },
+  clap:  { name:'Clap', short:'Clap',     color:'#ffe066', gain:0.55, desc:'A hand-clap snap; often takes the snare\'s job.' },
+  hat:   { name:'Hat', short:'Hat',      color:'#4fe3e0', gain:0.32, desc:'Closed hi-hat: a short "tss" that keeps time.' },
+  ohat:  { name:'Open hat', short:'OHat', color:'#4c9dff', gain:0.28, desc:'A hi-hat left ringing: a longer "tsssh".' },
+  perc:  { name:'Perc', short:'Perc',     color:'#c08bff', gain:0.4,  desc:'A woody tick for extra bounce.' },
+  bass:  { name:'Bass', short:'Bass',     color:'#5dff9a', gain:0.55, pitched:true, midi:[36,39,41,43,46,48],
            desc:'Low notes. Every row is in key, so nothing sounds wrong.' },
-  lead:  { name:'Lead',     color:'#ff8ad8', gain:0.22, pitched:true, midi:[60,63,65,67,70,72],
+  lead:  { name:'Lead', short:'Lead',     color:'#ff8ad8', gain:0.22, pitched:true, midi:[60,63,65,67,70,72],
            desc:'A melody voice, also locked to the key.' },
 };
 const LANE_ORDER = ['kick','snare','clap','hat','ohat','perc','bass','lead'];
@@ -328,6 +382,9 @@ const UNLOCK_TEXT = {
   'tool:velocity':'Velocity tool: play notes soft or loud', 'sandbox':'Sandbox: free play with everything you\'ve unlocked',
   'swing':'Swing control in the sandbox',
 };
+const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const PHONE_MQ = '(max-width:600px), (max-height:500px) and (orientation:landscape)';   // matches the CSS phone layout
+const isPhone = () => { try { return window.matchMedia(PHONE_MQ).matches; } catch(e){ return window.innerWidth < 600; } };
 const AUDIO_LOOKAHEAD_MS = 25;     // scheduler wake-up interval
 const AUDIO_SCHEDULE_AHEAD = 0.1;  // seconds of audio scheduled ahead of the clock
 const TARGET_LOOPS = 2;            // loops of the target per "Hear target"
@@ -1070,12 +1127,30 @@ function verifyLevels(){
    8. AUDIO ENGINE (all sounds synthesised)
    ===================================================================== */
 const AudioEngine = (() => {
-  let ctx = null, master = null, noiseBuf = null, lastOpen = null;
+  let ctx = null, master = null, noiseBuf = null, lastOpen = null, unlocked = false, htmlAudio = null;
+  /** iOS: older Safari mutes Web Audio when the ring/silent switch is on. A looping silent
+      <audio> element moves the page into the "playback" audio session. Newer Safari uses
+      navigator.audioSession instead (set in ensure). */
+  function silentHtmlAudio(){
+    if (htmlAudio || navigator.audioSession || !IS_IOS) return;
+    try{
+      const n = 4410, buf = new ArrayBuffer(44 + n*2), v = new DataView(buf);
+      const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o+i, str.charCodeAt(i)); };
+      w(0,'RIFF'); v.setUint32(4, 36 + n*2, true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true);
+      v.setUint16(22,1,true); v.setUint32(24,44100,true); v.setUint32(28,88200,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+      w(36,'data'); v.setUint32(40, n*2, true);
+      htmlAudio = new Audio(URL.createObjectURL(new Blob([buf], {type:'audio/wav'})));
+      htmlAudio.loop = true; htmlAudio.setAttribute('playsinline', ''); htmlAudio.play().catch(() => {});
+    }catch(e){ /* best effort */ }
+  }
   function ensure(){
     if (!ctx){
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}
       try { ctx = new AC(); } catch(e){ return null; }
+      // iOS can suspend or "interrupt" audio (calls, Siri, app switch): stop cleanly, resume on the next tap
+      ctx.onstatechange = () => { if (ctx.state !== 'running' && Seq.playing) Seq.stop(); };
       master = ctx.createGain(); master.gain.value = 0.85;
       const comp = ctx.createDynamicsCompressor();
       comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.18;
@@ -1085,7 +1160,11 @@ const AudioEngine = (() => {
       noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
       const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random()*2 - 1;
     }
-    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    if (ctx.state !== 'running' && ctx.state !== 'closed') ctx.resume().catch(() => {});
+    if (!unlocked){   // iOS: playing one silent sample inside a gesture unlocks output
+      try { const b = ctx.createBuffer(1, 1, 22050), s = ctx.createBufferSource(); s.buffer = b; s.connect(ctx.destination); s.start(0); unlocked = true; } catch(e){}
+    }
+    silentHtmlAudio();
     return ctx;
   }
   const now = () => ctx ? ctx.currentTime : performance.now()/1000;
@@ -1190,6 +1269,12 @@ const AudioEngine = (() => {
    9. SCHEDULER (lookahead: setTimeout ~25 ms, schedule ~100 ms ahead on the audio clock)
    ===================================================================== */
 function audible(lane){ return S.solo.size ? S.solo.has(lane) : !S.mute.has(lane); }
+/** Keep the phone screen awake while a loop plays (where the browser allows it). */
+const Wake = {
+  lock:null,
+  async on(){ try{ if (navigator.wakeLock && !this.lock){ this.lock = await navigator.wakeLock.request('screen'); this.lock.addEventListener('release', () => { this.lock = null; }); } }catch(e){} },
+  off(){ try{ if (this.lock) this.lock.release(); }catch(e){} this.lock = null; },
+};
 const Seq = {
   playing:false, step:0, nextTime:0, timer:null, queue:[], source:'player', targetLoops:0,
   stepDur(){ return 60/S.L.bpm/S.L.stepsPerBeat; },
@@ -1197,10 +1282,10 @@ const Seq = {
     AudioEngine.ensure();
     this.playing = true; this.step = 0; this.queue = [];
     this.nextTime = AudioEngine.now() + 0.06;
-    clearTimeout(this.timer); this.tick(); UI.transport();
+    clearTimeout(this.timer); this.tick(); UI.transport(); Wake.on();
   },
   stop(){
-    this.playing = false; clearTimeout(this.timer); this.queue = [];
+    this.playing = false; clearTimeout(this.timer); this.queue = []; Wake.off();
     this.source = 'player'; S.playStep = -1; S.playSource = 'player'; UI.transport();
   },
   restartAtTop(){ this.step = 0; this.queue = []; this.nextTime = AudioEngine.now() + 0.05; },
@@ -1237,18 +1322,19 @@ const G = { rows:[], cw:40, w:0, h:0, ruler:24, dpr:1 };
 function hexA(hex, a){ const n = parseInt(hex.slice(1), 16); return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`; }
 function layoutGrid(){
   const L = S.L; if (!L) return;
-  const narrow = window.innerWidth < 600;
+  const phone = isPhone(), narrow = window.innerWidth < 600;
   G.dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const drumH = narrow ? 34 : 38, pitchH = narrow ? 22 : 24;
+  // phones get tall rows: the step columns are narrow, so height makes the tap target
+  const drumH = phone ? (narrow ? 46 : 40) : 38, pitchH = phone ? (narrow ? 30 : 26) : 24;
   G.rows = []; let y = G.ruler;
   for (const lane of L.lanes){
     const lp = LANES[lane];
     if (lp.pitched) for (let p = lp.midi.length-1; p >= 0; p--){ G.rows.push({lane, pitch:p, y, h:pitchH}); y += pitchH; }
     else { G.rows.push({lane, pitch:0, y, h:drumH}); y += drumH; }
   }
-  const headW = narrow ? 66 : 108;
+  const headW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--headw')) || 108;
   const avail = document.getElementById('grid-wrap').clientWidth - headW - 2;
-  const minC = narrow ? 20 : 28;
+  const minC = narrow ? 18 : 28;
   G.cw = Math.max(minC, Math.min(72, Math.floor(avail / L.steps)));
   G.w = G.cw * L.steps; G.h = y;
   canvas.width = Math.round(G.w*G.dpr); canvas.height = Math.round(G.h*G.dpr);
@@ -1506,6 +1592,7 @@ function describeNote(n){
 }
 function afterChange(info){
   evaluate();
+  if (isPhone() && info && !S.introCollapsed){ S.introCollapsed = true; $('lvl-intro').classList.add('collapsed'); }   // free up screen once playing
   if (S.L.kind === 'sandbox') saveSandbox();
   let msg = '';
   if (info){
@@ -1582,7 +1669,7 @@ function handleTap(c){
 }
 
 // ---- keyboard ----
-canvas.addEventListener('focus', () => { S.showCursor = true; });
+// the dashed cursor appears once the keyboard is used (not on touch or mouse focus)
 canvas.addEventListener('keydown', e => {
   if (!S.L) return;
   const cur = S.cursor, rows = G.rows, r = rows[cur.row];
@@ -1675,7 +1762,7 @@ function buildSandboxLevel(){
 
 const UI = {
   show(screen){
-    S.screen = screen;
+    S.screen = screen; document.body.dataset.screen = screen;
     for (const s of ['title','levels','play']) $('screen-'+s).hidden = s !== screen;
     if (screen !== 'play' && Seq.playing) Seq.stop();
     $('toast').className = 'toast';
@@ -1727,7 +1814,7 @@ const UI = {
       d.className = 'lane-head' + (lp.pitched ? ' pitched' : '') + (audible(lane) ? '' : ' muted');
       d.style.height = h + 'px';
       const locked = L.locked.includes(lane);
-      d.innerHTML = `<button class="nm" title="${esc(lp.desc)} (click to hear it)"><span class="sw" style="background:${lp.color}"></span>${esc(lp.name)}${locked ? ' 🔒' : ''}</button>
+      d.innerHTML = `<button class="nm" title="${esc(lp.desc)} (click to hear it)"><span class="sw" style="background:${lp.color}"></span>${esc(isPhone() ? lp.short : lp.name)}${locked ? ' 🔒' : ''}</button>
         <div class="ms"><button aria-pressed="${S.mute.has(lane)}" aria-label="Mute ${esc(lp.name)}" title="Mute">M</button><button aria-pressed="${S.solo.has(lane)}" aria-label="Solo ${esc(lp.name)}" title="Solo: hear only this lane">S</button></div>
         <span class="tag">${S.mute.has(lane) ? 'muted' : S.solo.has(lane) ? 'solo' : !audible(lane) ? 'silent (solo)' : ''}</span>`;
       if (lp.pitched){
@@ -1745,6 +1832,10 @@ const UI = {
   tools(){
     const t = $('tools'); t.innerHTML = '';
     const list = S.L.tools;
+    const tb = $('btn-tool');   // phone dock: one button that cycles tools
+    tb.hidden = list.length < 2;
+    tb.textContent = window.innerWidth < 600 ? TOOLS[S.tool].label.slice(0, 1) : TOOLS[S.tool].label;   // icon only on narrow phones
+    tb.setAttribute('aria-label', `Tool: ${TOOLS[S.tool].label.slice(2)}. Tap to change.`);
     if (list.length < 2){ t.hidden = true; return; }
     t.hidden = false;
     for (const id of list){
@@ -1802,6 +1893,15 @@ const UI = {
       fin.disabled = !ev.requiredPass;
       fin.textContent = ev.requiredPass ? `Finish level ${'★'.repeat(st.stars)}` : `Finish (${ev.reqDone}/${ev.reqTotal} goals)`;
     }
+    const gb = $('btn-goals');   // phone dock: goal progress, becomes Finish when solved
+    gb.hidden = sandbox;
+    if (!sandbox){
+      const ev = S.evalRes;
+      const st3 = S.starInfo.stars, slim = window.innerWidth < 600;
+      gb.textContent = ev.requiredPass ? (slim ? `Finish ${st3}★` : `Finish ${'★'.repeat(st3)}`) : `Goals ${ev.reqDone}/${ev.reqTotal}`;
+      gb.setAttribute('aria-label', ev.requiredPass ? `Finish level with ${st3} of 3 stars` : `Goals: ${ev.reqDone} of ${ev.reqTotal} done. Show goals.`);
+      gb.classList.toggle('btn-primary', ev.requiredPass);
+    }
     const gr = S.grooveRes;
     $('groove-total').textContent = gr.total;
     $('parts').innerHTML = gr.parts.map(p => `<div class="part${p.applicable ? '' : ' na'}"><div class="row"><span>${esc(p.name)}</span>
@@ -1830,7 +1930,7 @@ const UI = {
     let html = chips.join('');
     if (B.moves != null && S.undo.length >= B.moves && !S.evalRes.requiredPass)
       html += `<div class="fail-banner" role="alert"><b>Out of moves.</b> Undo a move to get it back, or start over.
-        <button onclick="undo()">↶ Undo</button><button onclick="resetLevel()">Retry level</button></div>`;
+        <button onclick="undo()">↶ Undo</button><button onclick="resetLevel(true)">Retry level</button></div>`;
     el.innerHTML = html;
   },
   togglePlay(){ AudioEngine.ensure(); Seq.playing ? Seq.stop() : Seq.start(); },
@@ -1863,7 +1963,7 @@ const UI = {
   },
   showHint(){ UI.toast('💡 ' + S.L.hint, '', 7000); UI.announce(S.L.hint); },
   toast(msg, kind, ms){
-    const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (kind ? ' ' + kind : '');
+    const t = $('toast'); t.style.visibility = ''; t.textContent = msg; t.className = 'toast show' + (kind ? ' ' + kind : '');
     clearTimeout(UI._tt); UI._tt = setTimeout(() => { t.className = 'toast'; }, ms || 3200);
   },
   announce(msg){ const el = $('sr-live'); el.textContent = ''; setTimeout(() => { el.textContent = msg; }, 30); },
@@ -1872,7 +1972,14 @@ const UI = {
     const n = noteAtCell(S.notes, r.lane, S.cursor.step, r.pitch);
     UI.announce(`${ln(r.lane)}${LANES[r.lane].pitched ? ' ' + pitchName(r.lane, r.pitch) : ''}, ${stepLabel(S.cursor.step, L)} (step ${S.cursor.step+1}): ${n ? (VEL[n.vel].name + ' note') : 'empty'}.`);
   },
-  modal(html){ $('dialog').innerHTML = html; $('modal').hidden = false; const f = $('dialog').querySelector('button'); if (f) f.focus(); },
+  /** In-page confirmation (some embedded web views block window.confirm). Cancel gets focus. */
+  confirm(msg, yesLabel, onYes){
+    UI.modal(`<h2 id="modal-title">${esc(msg)}</h2><div class="actions"><button id="m-no">Cancel</button>
+      <button class="btn-primary" id="m-yes">${esc(yesLabel)}</button></div>`);
+    $('m-no').onclick = () => UI.closeModal();
+    $('m-yes').onclick = () => { UI.closeModal(); onYes(); };
+  },
+  modal(html){ $('toast').className = 'toast'; $('toast').style.visibility = 'hidden'; clearTimeout(UI._tt); $('dialog').innerHTML = html; $('modal').hidden = false; const f = $('dialog').querySelector('button'); if (f) f.focus(); },
   closeModal(){ $('modal').hidden = true; if (S.screen === 'play') canvas.focus({preventScroll:true}); },
   results(){
     const L = S.L, st = S.starInfo, gr = S.grooveRes, i = L.index;
@@ -1956,9 +2063,11 @@ function renderPlayScreen(){
   }
   $('rules').innerHTML = '';
   $('toast').className = 'toast';
+  S.introCollapsed = false; $('lvl-intro').classList.remove('collapsed');
   UI.show('play');
   layoutGrid(); UI.tools(); UI.help(); updateTouchAction();
   evaluate(); S.ready = true;
+  if (isPhone() && window.innerHeight > window.innerWidth && L.steps > 16) UI.toast('Two bars here: turn your phone sideways for a bigger grid.', '', 4500);
 }
 function openLevel(i){
   if (!levelUnlocked(i)) return;
@@ -1977,13 +2086,12 @@ function openSandbox(){
 }
 function resetLevel(force){
   if (!S.L) return;
-  if (!force && S.undo.length && !confirmSafe('Start this level over? Your changes will be cleared.')) return;
+  if (!force && S.undo.length) return UI.confirm('Start this level over? Your changes will be cleared.', 'Start over', () => resetLevel(true));
   const keep = {hints:S.hints, checks:S.checks, listens:S.listens, revealed:S.revealed};
   S.notes = cloneNotes(S.L.initialNotes); S.undo = []; S.redo = []; S.edits = 0; S.selected = null; S.wasPassing = false;
   Object.assign(S, keep);   // hints, checks and listens are not refunded by a reset
   afterChange({type:'redo'}); UI.toast('Back to the start.');
 }
-function confirmSafe(msg){ try{ return window.confirm(msg); }catch(e){ return true; } }
 function goLevels(){ UI.show('levels'); UI.levels(); }
 function firstUnfinished(){ for (let i = 0; i < LEVELS.length; i++){ if (!levelUnlocked(i)) return Math.max(0, i-1); if ((S.save.stars[LEVELS[i].id]||0) < 1) return i; } return 0; }
 
@@ -2019,7 +2127,25 @@ function boot(){
   $('btn-hint').onclick = () => UI.showHint();
   $('btn-reveal').onclick = () => UI.reveal();
   $('btn-finish').onclick = () => { if (S.evalRes && S.evalRes.requiredPass) UI.results(); };
-  $('btn-reset-progress').onclick = () => { if (confirmSafe('Erase all stars and unlocks?')){ S.save.stars = {}; S.save.sandbox = null; Store.save(); UI.levels(); UI.show('levels'); } };
+  $('btn-reset-progress').onclick = () => UI.confirm('Erase all stars and unlocks?', 'Erase progress', () => {
+    S.save.stars = {}; S.save.sandbox = null; Store.save(); UI.levels(); UI.show('levels'); });
+  // phone dock + header
+  $('btn-help2').onclick = () => UI.glossary();
+  $('btn-tool').onclick = () => { const t = S.L.tools; UI.setTool(t[(t.indexOf(S.tool) + 1) % t.length]); };
+  $('btn-goals').onclick = () => {
+    if (S.evalRes && S.evalRes.requiredPass) UI.results();
+    else $('rules-card').scrollIntoView({behavior: reducedMotion() ? 'auto' : 'smooth', block:'start'});
+  };
+  $('lvl-intro').onclick = () => $('lvl-intro').classList.toggle('collapsed');
+  // iOS: resume audio on any real gesture (touchend/click count as activation; pointerdown does not)
+  ['touchend','click','keydown'].forEach(ev => document.addEventListener(ev, () => AudioEngine.ensure(), {capture:true, passive:true}));
+  document.addEventListener('visibilitychange', () => { if (document.hidden && Seq.playing) Seq.stop(); });
+  // Home Screen app: offline cache (only when served over https as a top-level page)
+  const topLevel = (() => { try { return window.top === window; } catch(e){ return false; } })();
+  const standalone = (() => { try { return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch(e){ return false; } })();
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost') && topLevel)
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  $('install-hint').hidden = !(IS_IOS && topLevel && !standalone);
   $('modal').addEventListener('click', e => { if (e.target === $('modal')) UI.closeModal(); });
   $('sb-bpm').oninput = e => { S.L.bpm = +e.target.value; $('sb-bpm-v').textContent = S.L.bpm; saveSandbox(); };
   $('sb-swing').oninput = e => { S.L.swing = +e.target.value; $('sb-swing-v').textContent = Math.round(S.L.swing*100) + '%'; saveSandbox(); };
