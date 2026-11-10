@@ -1,0 +1,2045 @@
+<!doctype html>
+<!-- PROTOTYPE - NOT FOR PRODUCTION
+     Groove Puzzles: a DAW-style beat puzzle game. One self-contained file:
+     vanilla JS + Canvas 2D + Web Audio. Open it in a modern browser. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Groove Puzzles</title>
+<meta name="description" content="Fix, rebuild and finish beats on a piano-roll grid. A rhythm logic puzzle; no music theory needed.">
+<style>
+/* =====================================================================
+   STYLES
+   ===================================================================== */
+:root{
+  --bg:#0b0d17; --bg2:#10132a; --panel:#151a30; --panel2:#1c2242; --line:#283055;
+  --text:#e9ecff; --dim:#9aa3c7; --accent:#8c6cff; --accent2:#4fe3e0;
+  --good:#5dff9a; --bad:#ff6b81; --warn:#ffcf5c; --headw:108px;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent}
+body{min-height:100vh;overflow-x:hidden}
+.sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+button,select,input{font:inherit;color:inherit}
+button{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 12px;
+  min-height:38px;cursor:pointer;transition:background .15s,border-color .15s,transform .08s}
+button:hover:not(:disabled){border-color:#3d4780;background:#232a52}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button[aria-pressed="true"]{background:#2d2560;border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+.btn-primary{background:linear-gradient(135deg,#7a55ff,#b05cff);border-color:#a07dff;font-weight:650}
+.btn-primary:hover:not(:disabled){background:linear-gradient(135deg,#8a68ff,#c070ff)}
+.bg-pulse{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0;
+  background:radial-gradient(ellipse at 50% 30%,rgba(140,108,255,.22),transparent 65%)}
+#app{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:10px 16px 40px}
+
+/* top bar */
+.topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0 10px}
+.logo{font-weight:800;letter-spacing:.06em;font-size:19px;cursor:pointer;user-select:none;
+  background:linear-gradient(90deg,#ff5d73,#ffb347,#4fe3e0,#8c6cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo small{display:block;font-size:10px;letter-spacing:.2em;color:var(--dim);-webkit-text-fill-color:var(--dim)}
+.nav{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.nav button{min-height:34px;padding:5px 10px;font-size:14px}
+
+/* title */
+.title-screen{text-align:center;padding:6vh 0 20px}
+.title-screen h1{font-size:clamp(38px,9vw,78px);margin:0;line-height:1;letter-spacing:.04em;font-weight:900;
+  background:linear-gradient(90deg,#ff5d73,#ffb347 35%,#4fe3e0 65%,#8c6cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.title-screen p{color:var(--dim);font-size:17px;max-width:560px;margin:14px auto 26px}
+.title-screen .btn-primary{font-size:20px;padding:14px 34px;border-radius:14px}
+.title-grid{display:grid;grid-template-columns:repeat(16,1fr);gap:4px;max-width:520px;margin:34px auto 0}
+.title-grid i{aspect-ratio:1;border-radius:4px;background:#1a1f3c}
+.title-grid i.on{animation:tg 2.4s infinite}
+@keyframes tg{0%,100%{opacity:.25}10%{opacity:1;transform:scale(1.08)}30%{opacity:.5}}
+
+/* level select */
+.levels-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:6px 0 14px}
+.levels-head h2{margin:0}
+.levels-head .muted{color:var(--dim)}
+.level-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.lvl-card{text-align:left;display:flex;flex-direction:column;gap:4px;padding:12px;min-height:118px;
+  background:var(--panel);border-radius:12px;position:relative}
+.lvl-card .n{font-size:12px;color:var(--dim);font-family:ui-monospace,Menlo,Consolas,monospace}
+.lvl-card .t{font-weight:700;font-size:16px}
+.lvl-card .k{font-size:12px;color:var(--dim)}
+.lvl-card .s{margin-top:auto;font-size:18px;letter-spacing:2px;color:var(--warn)}
+.lvl-card.locked{opacity:.55}
+.lvl-card.locked .s{color:var(--dim);font-size:13px;letter-spacing:0}
+.lvl-card .warn{position:absolute;top:8px;right:10px;color:var(--bad);font-weight:800}
+.lvl-card.sandbox{background:linear-gradient(135deg,#1a2a3c,#22184a)}
+
+/* play */
+.play-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.play-head h2{margin:0;font-size:22px}
+.lvl-num{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--dim)}
+.badge{font-size:12px;padding:3px 8px;border-radius:99px;background:#272050;border:1px solid #4a3c99;color:#cfc2ff;white-space:nowrap}
+.meta{display:flex;gap:8px;margin-left:auto;color:var(--dim);font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace;flex-wrap:wrap}
+.meta span{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:3px 8px}
+.intro{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;
+  padding:10px 12px;margin:10px 0;max-width:900px}
+.intro b{color:#fff}
+.transport{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.transport .sep{width:1px;height:28px;background:var(--line);margin:0 4px}
+#btn-play{min-width:104px;font-weight:700}
+#btn-play.playing{background:#14332a;border-color:var(--good)}
+.tools{display:flex;gap:4px;flex-wrap:wrap}
+.tools button{font-size:13px;padding:5px 9px}
+.beat-led{width:14px;height:14px;border-radius:50%;background:#2a2f55;margin-left:4px;flex:none}
+.budget{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px;min-height:10px}
+.chip{font-size:13px;background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:3px 10px}
+.chip.warn{border-color:var(--warn);color:var(--warn)}
+.chip.bad{border-color:var(--bad);color:#ffc2cb}
+.fail-banner{width:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#3a1622;border:1px solid var(--bad);
+  border-radius:10px;padding:8px 10px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px;align-items:start}
+.grid-wrap{min-width:0}
+.grid-scroll{display:flex;overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#0d1022;position:relative}
+.lane-heads{position:sticky;left:0;z-index:2;flex:none;width:var(--headw);background:var(--panel);border-right:1px solid var(--line)}
+.lane-head{position:relative;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:2px 6px;
+  border-bottom:1px solid var(--line);overflow:hidden}
+.lane-head .nm{display:flex;align-items:center;gap:5px;font-weight:650;font-size:13px;white-space:nowrap;
+  background:none;border:none;padding:0;min-height:0;text-align:left}
+.lane-head .sw{width:9px;height:9px;border-radius:3px;flex:none}
+.lane-head .ms{display:flex;gap:3px}
+.lane-head .ms button{min-height:20px;padding:0 6px;font-size:11px;border-radius:5px;line-height:18px}
+.lane-head .tag{font-size:10px;color:var(--dim)}
+.lane-head.muted .nm{text-decoration:line-through;opacity:.6}
+.lane-head .rowlbl{position:absolute;right:4px;font-size:10px;color:var(--dim);font-family:ui-monospace,Menlo,Consolas,monospace;line-height:1}
+.lane-head.pitched{justify-content:flex-start;padding-top:5px;padding-right:24px}
+@media (max-width:600px){ .lane-head.pitched .ms{flex-direction:column;align-items:flex-start} }
+#grid{display:block;flex:none;cursor:pointer}
+#grid:focus-visible{outline:none}
+.grid-scroll:focus-within{border-color:var(--accent2)}
+.grid-help{color:var(--dim);font-size:12.5px;margin:6px 2px}
+.side{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
+.card h3{margin:0 0 8px;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.rules{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.rules li{display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:start}
+.rules .ic{width:24px;height:24px;border-radius:50%;border:2px solid #4a5285;display:grid;place-items:center;font-size:13px;font-weight:900;color:#4a5285;transition:all .2s}
+.rules li.pass .ic{background:var(--good);border-color:var(--good);color:#06240f}
+.rules .tx{font-size:14px}
+.rules li.pass .tx{color:#d7ffe4}
+.rules .st{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-left:4px;color:var(--dim)}
+.rules li.pass .st{color:var(--good)}
+.rules .opt{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);border:1px solid #6b5a2a;border-radius:5px;padding:0 4px;margin-right:5px}
+.rules .why{display:block;color:var(--dim);font-size:12.5px}
+.rules .det{display:block;color:#b8c0ea;font-size:12.5px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.rules li.pop .ic{animation:pop .45s}
+@keyframes pop{40%{transform:scale(1.35)}}
+.stars{font-size:30px;letter-spacing:3px;color:var(--warn);line-height:1}
+.stars-lbl{color:var(--dim);font-size:13px}
+.crit{list-style:none;padding:0;margin:8px 0 0;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.crit li::before{content:attr(data-mark);display:inline-block;width:20px;font-weight:900}
+.crit li.ok{color:#d7ffe4}
+.crit li.no{color:var(--dim)}
+.groove-total{display:flex;align-items:baseline;gap:8px;margin-top:10px}
+.groove-total b{font-size:28px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.parts{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.part .row{display:flex;justify-content:space-between;font-size:13px}
+.part .bar{height:6px;background:#262c52;border-radius:4px;overflow:hidden;margin:2px 0}
+.part .bar i{display:block;height:100%;background:linear-gradient(90deg,#4fe3e0,#8c6cff);border-radius:4px;transition:width .3s}
+.part .why{font-size:12px;color:var(--dim)}
+.part.na{opacity:.5}
+.tip{margin-top:10px;background:#1f1a3b;border:1px solid #4a3c99;border-radius:9px;padding:8px 10px;font-size:13.5px}
+.tip b{color:#cfc2ff}
+#btn-finish{width:100%;min-height:46px;font-size:16px}
+.sandbox-bar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:10px 0}
+.sandbox-bar label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--dim)}
+.sandbox-bar input[type=range]{width:120px;accent-color:var(--accent)}
+.sandbox-bar select{background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:4px}
+
+/* modal + toast */
+.modal{position:fixed;inset:0;background:rgba(5,6,14,.72);display:grid;place-items:center;z-index:50;padding:16px}
+.modal[hidden]{display:none}
+.dialog{background:var(--panel);border:1px solid #3d4780;border-radius:16px;max-width:520px;width:100%;max-height:90vh;overflow:auto;padding:18px 18px 16px;
+  box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.dialog h2{margin:0 0 6px}
+.dialog .stars{font-size:44px;margin:4px 0}
+.dialog .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.dialog .unl{background:#132a22;border:1px solid #2f7a52;border-radius:9px;padding:8px 10px;margin-top:10px;font-size:14px}
+.dialog dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
+.dialog dt{font-weight:700}
+.dialog dd{margin:0;color:var(--dim)}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#252b55;border:1px solid #4a54a0;color:#fff;
+  border-radius:10px;padding:9px 14px;z-index:60;max-width:min(92vw,520px);font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.5);
+  transition:opacity .25s;opacity:0;pointer-events:none}
+.toast.show{opacity:1}
+.toast.bad{background:#46182a;border-color:var(--bad)}
+.toast.good{background:#123626;border-color:var(--good)}
+
+@media (max-width:900px){ .main{grid-template-columns:1fr} }
+@media (max-width:600px){
+  :root{--headw:66px}
+  #app{padding:8px 10px 30px}
+  .lane-head .nm{font-size:11px}
+  .lane-head .tag{display:none}
+  .play-head h2{font-size:18px}
+  .meta{margin-left:0}
+  .transport button{padding:6px 8px;font-size:13px;min-height:36px}
+  .transport .sep{display:none}
+}
+body.rm *{animation:none!important;transition:none!important}
+</style>
+</head>
+<body>
+<div class="bg-pulse" id="bg-pulse" aria-hidden="true"></div>
+<div id="app">
+  <header class="topbar">
+    <div class="logo" id="logo" role="button" tabindex="0" aria-label="Groove Puzzles home">GROOVE PUZZLES<small>BEAT LOGIC</small></div>
+    <nav class="nav" aria-label="Main">
+      <button id="nav-levels">Levels</button>
+      <button id="nav-sandbox">Sandbox</button>
+      <button id="nav-motion" aria-pressed="false" title="Reduce motion: no particles or pulsing">Reduce motion</button>
+      <button id="nav-help" aria-label="Help and glossary">? Help</button>
+    </nav>
+  </header>
+
+  <!-- Title -->
+  <section id="screen-title" class="title-screen">
+    <h1>GROOVE<br>PUZZLES</h1>
+    <p>You're the producer. Fix broken beats, rebuild ones you hear, and finish loops. Tap the grid to place sounds. No music theory needed.</p>
+    <button class="btn-primary" id="btn-start">▶ Start</button>
+    <div class="title-grid" id="title-grid" aria-hidden="true"></div>
+  </section>
+
+  <!-- Level select -->
+  <section id="screen-levels" hidden>
+    <div class="levels-head"><h2>Levels</h2><span class="muted" id="levels-summary"></span>
+      <button id="btn-reset-progress" style="margin-left:auto;font-size:13px">Reset progress</button></div>
+    <div class="level-grid" id="level-grid"></div>
+  </section>
+
+  <!-- Play -->
+  <section id="screen-play" hidden>
+    <div class="play-head">
+      <button id="btn-back" aria-label="Back to levels">← Levels</button>
+      <span class="lvl-num" id="lvl-num"></span>
+      <h2 id="lvl-name"></h2>
+      <span class="badge" id="lvl-kind"></span>
+      <div class="meta"><span id="lvl-bpm"></span><span id="lvl-swing"></span><span id="lvl-steps"></span></div>
+    </div>
+    <p class="intro" id="lvl-intro"></p>
+    <div class="sandbox-bar" id="sandbox-bar" hidden>
+      <label>Tempo <input type="range" id="sb-bpm" min="60" max="180" step="1"> <span id="sb-bpm-v"></span></label>
+      <label id="sb-swing-wrap">Swing <input type="range" id="sb-swing" min="0" max="0.4" step="0.01"> <span id="sb-swing-v"></span></label>
+      <label>Length <select id="sb-steps"><option value="16">1 bar</option><option value="32">2 bars</option></select></label>
+      <button id="sb-clear">Clear grid</button>
+    </div>
+    <div class="transport" role="toolbar" aria-label="Transport and tools">
+      <button id="btn-play" aria-pressed="false" title="Play or stop (P)">▶ Play</button>
+      <button id="btn-target" title="Hear the hidden target (T)">🎧 Hear target</button>
+      <button id="btn-check" title="Compare your beat with the target">Check</button>
+      <span class="sep"></span>
+      <button id="btn-undo" title="Undo (Ctrl+Z)">↶ Undo</button>
+      <button id="btn-redo" title="Redo (Ctrl+Shift+Z)">↷ Redo</button>
+      <button id="btn-reset" title="Start this level over">Reset</button>
+      <span class="sep"></span>
+      <button id="btn-hint" title="Show a hint">💡 Hint</button>
+      <button id="btn-reveal" title="Reveal one note of the target (costs ★★★)">Reveal a note</button>
+      <span class="sep"></span>
+      <div class="tools" id="tools" role="radiogroup" aria-label="Tools"></div>
+      <span class="beat-led" id="beat-led" aria-hidden="true"></span>
+    </div>
+    <div class="budget" id="budget" aria-live="polite"></div>
+    <div class="main">
+      <div class="grid-wrap" id="grid-wrap">
+        <div class="grid-scroll" id="grid-scroll">
+          <div class="lane-heads" id="lane-heads"></div>
+          <canvas id="grid" tabindex="0" role="application"
+            aria-label="Beat grid. Arrow keys move the cursor, Enter or Space adds or removes a note, P plays."></canvas>
+        </div>
+        <div class="grid-help" id="grid-help"></div>
+      </div>
+      <aside class="side">
+        <div class="card" id="rules-card"><h3>Goals</h3><ul class="rules" id="rules"></ul></div>
+        <div class="card" id="score-card">
+          <h3 id="score-title">Score</h3>
+          <div id="stars-wrap"><div class="stars" id="stars" aria-hidden="true">☆☆☆</div><div class="stars-lbl" id="stars-lbl"></div>
+            <ul class="crit" id="crit"></ul></div>
+          <div class="groove-total"><b id="groove-total">0</b><span>/100 groove quality</span></div>
+          <div class="parts" id="parts"></div>
+          <div class="tip" id="tip"></div>
+        </div>
+        <button class="btn-primary" id="btn-finish" disabled>Finish level</button>
+      </aside>
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="modal" hidden><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title" id="dialog"></div></div>
+<div class="toast" id="toast" role="status"></div>
+<div class="sr-only" id="sr-live" aria-live="polite"></div>
+<noscript><p style="padding:20px">Groove Puzzles needs JavaScript.</p></noscript>
+
+<script>
+'use strict';
+/* =====================================================================
+   1. CONSTANTS: lanes, kinds, tools, velocities
+   ===================================================================== */
+const LANES = {
+  kick:  { name:'Kick',     color:'#ff5d73', gain:0.95, desc:'The deep thump that anchors the beat.' },
+  snare: { name:'Snare',    color:'#ffb347', gain:0.6,  desc:'The sharp crack, usually on beats 2 and 4.' },
+  clap:  { name:'Clap',     color:'#ffe066', gain:0.55, desc:'A hand-clap snap; often takes the snare\'s job.' },
+  hat:   { name:'Hat',      color:'#4fe3e0', gain:0.32, desc:'Closed hi-hat: a short "tss" that keeps time.' },
+  ohat:  { name:'Open hat', color:'#4c9dff', gain:0.28, desc:'A hi-hat left ringing: a longer "tsssh".' },
+  perc:  { name:'Perc',     color:'#c08bff', gain:0.4,  desc:'A woody tick for extra bounce.' },
+  bass:  { name:'Bass',     color:'#5dff9a', gain:0.55, pitched:true, midi:[36,39,41,43,46,48],
+           desc:'Low notes. Every row is in key, so nothing sounds wrong.' },
+  lead:  { name:'Lead',     color:'#ff8ad8', gain:0.22, pitched:true, midi:[60,63,65,67,70,72],
+           desc:'A melody voice, also locked to the key.' },
+};
+const LANE_ORDER = ['kick','snare','clap','hat','ohat','perc','bass','lead'];
+const HEAVY = new Set(['kick','snare','clap','bass']);       // lanes judged for placement
+const NOTE_NAMES = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+const VEL = { 1:{name:'soft', gain:0.42}, 2:{name:'medium', gain:0.72}, 3:{name:'loud', gain:1} };
+
+/** Puzzle kinds: permissions live here as data, so levels never need engine code. */
+const KINDS = {
+  ghost:   { label:'Ghost Beat',        canAdd:true,  canRemoveInitial:true,  target:true,
+             blurb:'A hidden beat is playing. Listen, then rebuild it.' },
+  fix:     { label:'Fix the Loop',      canAdd:true,  canRemoveInitial:true,
+             blurb:'This loop is broken. Fix it within the move budget.' },
+  fill:    { label:'Fill the Gaps',     canAdd:true,  canRemoveInitial:false,
+             blurb:'Add a few notes to finish the loop. The notes that came with it stay.' },
+  brief:   { label:'Genre Brief',       canAdd:true,  canRemoveInitial:true,
+             blurb:'Build a beat that matches the brief.' },
+  remove:  { label:'Remove to Improve', canAdd:false, canRemoveInitial:true,
+             blurb:'Too busy! Delete notes until it breathes.' },
+  sandbox: { label:'Sandbox',           canAdd:true,  canRemoveInitial:true,
+             blurb:'Free play. No rules, just your groove score.' },
+};
+const TOOLS = {
+  draw:     { label:'✎ Draw',     key:'1', help:'Tap an empty cell to add a note, tap a note to remove it.' },
+  move:     { label:'✥ Move',     key:'2', help:'Drag a note to a new step (or tap it, then tap where it should go).' },
+  resize:   { label:'⇔ Resize',   key:'3', help:'Drag a bass or lead note sideways to make it longer (or tap it to grow).' },
+  velocity: { label:'◐ Velocity', key:'4', help:'Tap a note to change how hard it hits: medium → loud → soft.' },
+};
+const UNLOCK_TEXT = {
+  'lane:snare':'Snare lane', 'lane:hat':'Hi-hat lane', 'lane:ohat':'Open hat lane', 'lane:perc':'Perc lane',
+  'lane:bass':'Bass lane', 'lane:clap':'Clap lane', 'lane:lead':'Lead lane',
+  'tool:move':'Move tool: drag notes to new steps', 'tool:resize':'Resize tool: hold bass notes longer',
+  'tool:velocity':'Velocity tool: play notes soft or loud', 'sandbox':'Sandbox: free play with everything you\'ve unlocked',
+  'swing':'Swing control in the sandbox',
+};
+const AUDIO_LOOKAHEAD_MS = 25;     // scheduler wake-up interval
+const AUDIO_SCHEDULE_AHEAD = 0.1;  // seconds of audio scheduled ahead of the clock
+const TARGET_LOOPS = 2;            // loops of the target per "Hear target"
+
+/* =====================================================================
+   2. LEVELS (plain data). Pattern entries: step number, or {s, p, l, v}
+      s = step (0-based), p = pitch row (0 = home note), l = length, v = 1 soft / 2 / 3 loud
+   ===================================================================== */
+const EIGHTHS16 = [0,2,4,6,8,10,12,14];
+const ALL16 = [...Array(16).keys()];
+const EIGHTHS32 = [...Array(16).keys()].map(i=>i*2);
+
+const LEVELS = [
+  { id:'first-kick', title:'First Kick', kind:'brief', bpm:92, swing:0, steps:8, stepsPerBeat:2, metronome:true,
+    lanes:['kick'],
+    intro:'Every beat starts with a <b>kick</b>. Tap the first column (<b>beat 1</b>) to place one. The loop is already playing, so you\'ll hear it straight away.',
+    initial:{}, solution:{kick:[0,4]},
+    rules:[
+      {type:'noteAt', lane:'kick', steps:[0], why:'Beat 1 is "home". A kick there anchors the loop.'},
+      {type:'noteCount', lane:'kick', min:1, max:2, why:'Keep it simple for now.'},
+      {type:'noteAt', lane:'kick', steps:[4], optional:true, why:'Beat 3 is halfway through. A second kick there makes a steady stomp.'},
+    ],
+    budget:{}, star3:{maxMoves:2}, tools:['draw'],
+    hint:'Columns are time, left to right. Each beat is two columns: beat 1 is column 1, beat 3 is column 5.',
+    unlocks:['lane:snare'] },
+
+  { id:'backbeat', title:'The Backbeat', kind:'brief', bpm:92, swing:0, steps:8, stepsPerBeat:2, metronome:true,
+    lanes:['kick','snare'], locked:['kick'],
+    intro:'The kick is done for you (locked 🔒). Add a <b>snare</b> on <b>beats 2 and 4</b>. That\'s the "backbeat": the snap that makes heads nod.',
+    initial:{kick:[0,4]}, solution:{kick:[0,4], snare:[2,6]},
+    rules:[
+      {type:'backbeat', lane:'snare', steps:[2,6]},
+      {type:'noteCount', lane:'snare', min:2, max:2, optional:true, why:'Just those two. Space makes them hit harder.'},
+    ],
+    budget:{}, star3:{maxMoves:2}, tools:['draw'],
+    hint:'Beat 2 is column 3 and beat 4 is column 7. They fall between the kicks.',
+    unlocks:[] },
+
+  { id:'echo', title:'Echo', kind:'ghost', bpm:96, swing:0, steps:8, stepsPerBeat:2, metronome:true,
+    lanes:['kick'],
+    intro:'A hidden kick pattern of <b>4 kicks</b>. Press <b>🎧 Hear target</b>, then copy it by ear. Press <b>Check</b> to see how close you are.',
+    initial:{}, target:{kick:[0,3,4,6]},
+    rules:[ {type:'matchTarget'} ],
+    budget:{hints:4}, star3:{maxHints:0}, tools:['draw'],
+    hint:'It starts on beat 1. Count "1 and 2 and 3 and 4 and" out loud along with it: each word is one column.',
+    unlocks:['lane:hat'] },
+
+  { id:'four-floor', title:'Four on the Floor', kind:'brief', bpm:118, swing:0, steps:16, stepsPerBeat:4,
+    lanes:['kick','snare','hat'],
+    intro:'Now 16 steps: <b>4 steps per beat</b>. Brief: <b>kick on every beat</b>, snare on 2 and 4, and hats on every "and" (halfway between beats). Classic dance groove.',
+    initial:{}, solution:{kick:[0,4,8,12], snare:[4,12], hat:[2,6,10,14]},
+    rules:[
+      {type:'noteAt', lane:'kick', steps:[0,4,8,12], label:'Kick on every beat (1, 2, 3 and 4)', why:'"Four on the floor": the heartbeat of dance music.'},
+      {type:'backbeat', lane:'snare', steps:[4,12]},
+      {type:'noteAt', lane:'hat', steps:[2,6,10,14], label:'Hats on every "and"', why:'The "and" is the step halfway between beats. Hats there make it bounce.'},
+      {type:'noteCount', lane:'snare', min:2, max:2, optional:true},
+      {type:'noteCount', lane:'hat', min:4, max:4, optional:true, why:'Only on the "and"s, so the beats stay clean.'},
+    ],
+    budget:{}, star3:{minGroove:70}, tools:['draw'],
+    hint:'The thick lines mark beats. Beats are columns 1, 5, 9 and 13. Each "and" is two columns after a beat.',
+    unlocks:['tool:move'] },
+
+  { id:'clumsy', title:'Clumsy Drummer', kind:'fix', bpm:96, swing:0, steps:16, stepsPerBeat:4,
+    lanes:['kick','snare','hat'],
+    intro:'Our drummer had a rough night: <b>double hits</b>, a <b>missing snare</b> and hats that never stop. Fix it in <b>7 moves</b>. The new <b>Move</b> tool shifts a note in one move.',
+    initial:{kick:[0,7,8], snare:[4,5], hat:ALL16},
+    solution:{kick:[0,8], snare:[4,12], hat:[0,1,2,3,5,6,7,8,10,11,13,14,15]},
+    rules:[
+      {type:'backbeat', lane:'snare', steps:[4,12]},
+      {type:'noAdjacent', lane:'snare'},
+      {type:'noAdjacent', lane:'kick'},
+      {type:'maxFillLength', lane:'hat', n:4},
+      {type:'silentSteps', lane:'hat', steps:[4,12], optional:true, label:'No hats under the snares (beats 2 and 4)', why:'Gives the snare a clear spot to crack.'},
+    ],
+    budget:{moves:7}, star3:{maxMoves:5}, tools:['draw','move'],
+    hint:'The snare on step 6 is one step late: move it to beat 4 (step 13). For the hats, one gap every 5 steps is enough.',
+    unlocks:['sandbox','lane:ohat','swing'] },
+
+  { id:'hat-hole', title:'Hole in the Hats', kind:'fill', bpm:100, swing:0.15, steps:16, stepsPerBeat:4,
+    lanes:['kick','snare','hat','ohat'],
+    intro:'<b>Swing</b> is on: every second step leans a little late, which makes it bounce. Add <b>exactly 3 notes</b> to finish this loop. Meet the <b>open hat</b>: a hi-hat left ringing.',
+    initial:{kick:[0], snare:[4,12], hat:[0,2,4,6,8,10,12]},
+    solution:{kick:[0,8,10], snare:[4,12], hat:[0,2,4,6,8,10,12], ohat:[14]},
+    rules:[
+      {type:'noteAt', lane:'kick', steps:[0,8]},
+      {type:'noteCount', lane:'kick', min:3, max:3},
+      {type:'cover', lanes:['hat','ohat'], steps:EIGHTHS16, label:'A hat or open hat on every 8th note (every other step)'},
+      {type:'noteCount', lane:'ohat', min:1, max:2},
+      {type:'noOverlap', a:'hat', b:'ohat', why:'They\'re the same cymbal: it can\'t be open and closed at once.'},
+      {type:'added', min:3, max:3},
+      {type:'syncopation', lane:'kick', min:1, optional:true},
+    ],
+    budget:{adds:3}, star3:{maxMoves:3}, tools:['draw','move'],
+    hint:'There\'s one gap in the hats at the end of the bar: perfect for an open hat. One kick goes on beat 3 and one goes between beats.',
+    unlocks:['lane:perc'] },
+
+  { id:'bap-ghost', title:'Boom-Bap Ghost', kind:'ghost', bpm:88, swing:0.2, steps:16, stepsPerBeat:4,
+    lanes:['kick','snare','hat'], locked:['hat'],
+    intro:'Hats are done. Listen to the target and rebuild the <b>kick and snare</b>. Hints and extra Checks cost your third star.',
+    initial:{hat:EIGHTHS16}, target:{kick:[0,6,10], snare:[4,12], hat:EIGHTHS16},
+    rules:[ {type:'matchTarget', lanes:['kick','snare']} ],
+    budget:{hints:3, listens:6}, star3:{maxHints:0, maxChecks:4}, tools:['draw','move'],
+    hint:'The snare is the classic backbeat. There are 3 kicks: one on beat 1, and two land on "and"s (in line with a hat).',
+    unlocks:[] },
+
+  { id:'avalanche', title:'Hat Avalanche', kind:'remove', bpm:100, swing:0, steps:16, stepsPerBeat:4,
+    lanes:['kick','snare','hat','ohat','perc'],
+    intro:'Way too much going on. <b>Delete notes</b> (tap them) until it breathes. You can\'t add anything here: space is the instrument.',
+    initial:{kick:EIGHTHS16, snare:[4,6,12,14], hat:ALL16, ohat:[2,6,10,14], perc:[3,7,11,15]},
+    solution:{kick:[0,8,10], snare:[4,12], hat:[0,2,4,8,10,12], ohat:[6,14], perc:[3,11]},
+    rules:[
+      {type:'density', max:0.30},
+      {type:'backbeat', lane:'snare', steps:[4,12]},
+      {type:'noteCount', lane:'snare', min:2, max:2},
+      {type:'noOverlap', a:'kick', b:'snare'},
+      {type:'noOverlap', a:'hat', b:'ohat', why:'They\'re the same cymbal: it can\'t be open and closed at once.'},
+      {type:'maxFillLength', lane:'hat', n:3},
+      {type:'noteCount', lane:'kick', min:2, max:4, optional:true},
+      {type:'density', max:0.22, optional:true},
+    ],
+    budget:{}, star3:{minGroove:75}, tools:['draw'],
+    hint:'Start with the snares off the backbeat, then any kick on a snare. Open hats need their closed hats gone.',
+    unlocks:['lane:bass'] },
+
+  { id:'meet-bass', title:'Meet the Bass', kind:'brief', bpm:100, swing:0, steps:16, stepsPerBeat:4,
+    lanes:['kick','snare','hat','bass'], locked:['kick','snare','hat'],
+    intro:'The <b>bass</b> lane has rows for pitch: higher rows, higher notes. Every row is in key. Rule of thumb: <b>start bass notes with the kick</b> so they punch together.',
+    initial:{kick:[0,6,10], snare:[4,12], hat:EIGHTHS16},
+    solution:{kick:[0,6,10], snare:[4,12], hat:EIGHTHS16, bass:[{s:0,p:0},{s:6,p:0},{s:10,p:1}]},
+    rules:[
+      {type:'noteAt', lane:'bass', steps:[0], pitch:0, why:'The home note (C, marked ⌂, bottom row) makes beat 1 feel like home.'},
+      {type:'kickBassLock', tolerance:0},
+      {type:'noteCount', lane:'bass', min:3, max:6},
+      {type:'distinctPitches', lane:'bass', min:2, optional:true},
+    ],
+    budget:{}, star3:{minGroove:70}, tools:['draw','move'],
+    hint:'Kicks are on steps 1, 7 and 11. Put a bass note under each; make one of them a higher row.',
+    unlocks:[] },
+
+  { id:'kick-vs-bass', title:'Kick vs Bass', kind:'fix', bpm:104, swing:0, steps:16, stepsPerBeat:4,
+    lanes:['kick','snare','hat','bass'], locked:['kick','snare','hat'],
+    intro:'The bass player is rushing: notes land <b>just after</b> the kick, so they smear. Line the bass up with the kicks. <b>5 moves</b>.',
+    initial:{kick:[0,6,10], snare:[4,12], hat:EIGHTHS16, bass:[{s:1,p:0},{s:7,p:0},{s:10,p:3},{s:11,p:2}]},
+    solution:{kick:[0,6,10], snare:[4,12], hat:EIGHTHS16, bass:[{s:0,p:0},{s:6,p:0},{s:10,p:3}]},
+    rules:[
+      {type:'kickBassLock', tolerance:0},
+      {type:'noAdjacent', lane:'bass'},
+      {type:'noteCount', lane:'bass', min:3, max:4},
+      {type:'noteAt', lane:'bass', steps:[0], pitch:0, optional:true},
+    ],
+    budget:{moves:5}, star3:{maxMoves:3}, tools:['draw','move'],
+    hint:'Use Move: slide the two early notes one step left. One note has no kick to land on at all.',
+    unlocks:['tool:resize'] },
+
+  { id:'hold-note', title:'Hold That Note', kind:'brief', bpm:96, swing:0, steps:16, stepsPerBeat:4,
+    lanes:['kick','snare','hat','bass'], locked:['kick','snare','hat'],
+    intro:'New <b>Resize</b> tool: drag a bass note sideways to hold it longer. Long notes fill space without adding more hits.',
+    initial:{kick:[0,8,11], snare:[4,12], hat:EIGHTHS16, bass:[{s:0,p:0}]},
+    solution:{kick:[0,8,11], snare:[4,12], hat:EIGHTHS16, bass:[{s:0,p:0,l:4},{s:8,p:3,l:2},{s:11,p:2}]},
+    rules:[
+      {type:'noteAt', lane:'bass', steps:[0], pitch:0},
+      {type:'noteLength', lane:'bass', step:0, min:4},
+      {type:'kickBassLock', tolerance:0},
+      {type:'silentSteps', lane:'bass', steps:[4,12], label:'Bass is quiet under the snares (beats 2 and 4)'},
+      {type:'distinctPitches', lane:'bass', min:2, optional:true},
+      {type:'noteCount', lane:'bass', min:3, max:3, optional:true},
+    ],
+    budget:{}, star3:{minGroove:70}, tools:['draw','move','resize'],
+    hint:'Hold the first note exactly 4 steps (up to the snare, not over it). Then add notes under the kicks on steps 9 and 12.',
+    unlocks:[] },
+
+  { id:'two-bar-bass', title:'Two-Bar Bassline', kind:'ghost', bpm:96, swing:0, steps:32, stepsPerBeat:4,
+    lanes:['kick','snare','hat','bass'], locked:['kick','snare','hat'],
+    intro:'Two bars now (32 steps). Rebuild the hidden <b>bassline</b>, notes and all. Check tells you when a note is at the right time but the wrong pitch.',
+    initial:{kick:[0,6,10,16,22,26], snare:[4,12,20,28], hat:EIGHTHS32},
+    target:{kick:[0,6,10,16,22,26], snare:[4,12,20,28], hat:EIGHTHS32,
+            bass:[{s:0,p:0},{s:6,p:0},{s:10,p:1},{s:16,p:0},{s:22,p:0},{s:26,p:3}]},
+    rules:[ {type:'matchTarget', lanes:['bass']} ],
+    budget:{hints:3, listens:8}, star3:{maxHints:0, maxChecks:5}, tools:['draw','move'],
+    hint:'Every bass note lands on a kick. Most are the home note. Only the third note of each bar goes up.',
+    unlocks:['tool:velocity','lane:clap'] },
+
+  { id:'boom-bap', title:'Boom-Bap Brief', kind:'brief', bpm:90, swing:0.25, steps:16, stepsPerBeat:4,
+    lanes:['kick','snare','hat'],
+    intro:'Brief: <i>"90 BPM boom-bap: kick on 1 and the \'and\' of 2, snare on 2 and 4, hats sparse."</i> New <b>Velocity</b> tool: tap a note to make it soft or loud.',
+    initial:{}, solution:{kick:[0,6,10], snare:[{s:4,v:3},{s:12,v:3}], hat:[0,4,8,12]},
+    rules:[
+      {type:'noteAt', lane:'kick', steps:[0,6]},
+      {type:'backbeat', lane:'snare', steps:[4,12]},
+      {type:'noteCount', lane:'hat', min:2, max:6, label:'Hats sparse: 2 to 6 hats'},
+      {type:'noAdjacent', lane:'kick'},
+      {type:'accent', lane:'snare', steps:[4,12], optional:true},
+      {type:'syncopation', lane:'kick', min:2, optional:true},
+    ],
+    budget:{}, star3:{minGroove:75}, tools:['draw','move','velocity'],
+    hint:'"The and of 2" is step 7. Make the snares loud with Velocity (tap twice: medium → loud). A third kick on the "and" of 3 adds swagger.',
+    unlocks:[] },
+
+  { id:'house', title:'House Brief', kind:'brief', bpm:124, swing:0, steps:16, stepsPerBeat:4,
+    lanes:['kick','clap','hat','ohat','bass'],
+    intro:'Brief: <i>"124 BPM house: four-on-the-floor kick, clap on 2 and 4, open hats on the off-beats, bass that bounces between the kicks."</i>',
+    initial:{}, solution:{kick:[0,4,8,12], clap:[4,12], ohat:[2,6,10,14],
+      hat:[{s:3,v:1},{s:7,v:1},{s:11,v:1},{s:15,v:1}], bass:[{s:2,p:0},{s:6,p:0},{s:10,p:1},{s:14,p:0}]},
+    rules:[
+      {type:'noteAt', lane:'kick', steps:[0,4,8,12], label:'Kick on every beat'},
+      {type:'backbeat', lane:'clap', steps:[4,12]},
+      {type:'noteAt', lane:'ohat', steps:[2,6,10,14], label:'Open hat on every "and"'},
+      {type:'noOverlap', a:'hat', b:'ohat', why:'Same cymbal: it can\'t be open and closed at once.'},
+      {type:'noOverlap', a:'kick', b:'bass', label:'Bass dodges the kick (never on the same step)', why:'In house, the bass bounces in the gaps between kicks.'},
+      {type:'noteCount', lane:'bass', min:3, max:8},
+      {type:'ghostNotes', lane:'hat', min:2, optional:true},
+      {type:'distinctPitches', lane:'bass', min:2, optional:true},
+    ],
+    budget:{}, star3:{minGroove:75}, tools:['draw','move','resize','velocity'],
+    hint:'Bass on the same steps as the open hats works great. Soft closed hats just before each beat add shuffle.',
+    unlocks:[] },
+
+  { id:'trap', title:'Trap Brief', kind:'brief', bpm:140, swing:0, steps:16, stepsPerBeat:4, backbeat:[8],
+    lanes:['kick','snare','hat','perc','bass'],
+    intro:'Brief: <i>"140 BPM trap: half-time feel, one big snare on beat 3, rolling hats, kick and 808 bass locked together."</i>',
+    initial:{}, solution:{kick:[0,6,10], snare:[8], hat:[0,2,4,6,8,10,12,{s:13,v:1},14,{s:15,v:1}], perc:[3,11],
+      bass:[{s:0,p:0},{s:6,p:0},{s:10,p:3}]},
+    rules:[
+      {type:'noteAt', lane:'snare', steps:[8], why:'Trap feels half-speed: one big snare in the middle of the bar.'},
+      {type:'noteCount', lane:'snare', min:1, max:2},
+      {type:'minRun', lane:'hat', n:4},
+      {type:'noteCount', lane:'hat', min:6, max:16},
+      {type:'syncopation', lane:'kick', min:2},
+      {type:'kickBassLock', tolerance:0},
+      {type:'velVariety', lane:'hat', min:2, optional:true},
+      {type:'noteCount', lane:'perc', min:1, max:4, optional:true},
+    ],
+    budget:{}, star3:{minGroove:80}, tools:['draw','move','resize','velocity'],
+    hint:'Hats on every "and", then fill the last beat solid for the roll. Kicks on "and"s count as between the beats.',
+    unlocks:[] },
+
+  { id:'dnb', title:'DnB Two-Step', kind:'brief', bpm:172, swing:0, steps:16, stepsPerBeat:4,
+    lanes:['kick','snare','hat'],
+    intro:'Brief: <i>"172 BPM drum & bass two-step: kick on 1 and the \'and\' of 3, snare on 2 and 4, steady 8th-note hats."</i> Fast!',
+    initial:{}, solution:{kick:[0,10], snare:[4,12,{s:7,v:1}], hat:EIGHTHS16},
+    rules:[
+      {type:'noteAt', lane:'kick', steps:[0,10]},
+      {type:'backbeat', lane:'snare', steps:[4,12]},
+      {type:'cover', lanes:['hat'], steps:EIGHTHS16, label:'Hats on every 8th note (every other step)'},
+      {type:'noteCount', lane:'kick', min:2, max:3},
+      {type:'ghostNotes', lane:'snare', min:1, optional:true},
+    ],
+    budget:{}, star3:{minGroove:80}, tools:['draw','move','velocity'],
+    hint:'"The and of 3" is step 11. For the bonus, add a soft snare somewhere quiet and set it soft with Velocity.',
+    unlocks:[] },
+
+  { id:'lofi-fill', title:'Lo-fi Fill', kind:'fill', bpm:78, swing:0.3, steps:32, stepsPerBeat:4,
+    lanes:['kick','snare','hat','perc'],
+    intro:'A sleepy lo-fi loop that just… stops. Write a <b>fill</b> in the very last beat: a short burst that leads back to the top. At most <b>4 notes</b>.',
+    initial:{kick:[0,6,10,16,22], snare:[4,12,20], hat:EIGHTHS32.filter(s=>s<28)},
+    solution:{kick:[0,6,10,16,22], snare:[4,12,20,{s:28,v:1},30], hat:EIGHTHS32.filter(s=>s<28), perc:[29,{s:31,v:3}]},
+    rules:[
+      {type:'rangeCount', lanes:['kick','snare','perc'], from:28, to:31, min:3, max:4, label:'A fill of 3 or 4 hits in the last beat (steps 29-32)'},
+      {type:'added', min:0, max:4},
+      {type:'accentIn', lanes:['kick','snare','perc'], from:30, to:31, optional:true, label:'End the fill with a loud hit (step 31 or 32)'},
+      {type:'rangeCount', lanes:['snare'], from:28, to:31, min:2, max:4, optional:true, label:'The snare leads the fill (2+ snares)'},
+    ],
+    budget:{adds:4}, star3:{minGroove:75}, tools:['draw','velocity'],
+    hint:'Alternate snare and perc so no two snares touch. Start soft, end loud.',
+    unlocks:['lane:lead'] },
+
+  { id:'boss', title:'Boss: The Remix', kind:'fix', bpm:100, swing:0.1, steps:32, stepsPerBeat:4,
+    lanes:['lead','kick','snare','hat','ohat','bass'],
+    intro:'<b>Boss level.</b> A client\'s 2-bar loop with every problem at once: flams, a missing snare, choking hats, a lazy bass and a lead that never answers. <b>10 moves.</b>',
+    initial:{lead:[{s:0,p:2},{s:8,p:3}], kick:[0,1,10,16,26,27], snare:[4,12,20],
+      hat:[...EIGHTHS32,17,19,21,23], ohat:[14,30],
+      bass:[{s:0,p:0},{s:10,p:3},{s:17,p:0},{s:26,p:2}]},
+    solution:{lead:[{s:0,p:2},{s:8,p:3},{s:16,p:0}], kick:[0,10,16,26], snare:[4,12,20,28],
+      hat:[...EIGHTHS32.filter(s=>s!==14&&s!==20&&s!==30),17,19,21,23], ohat:[14,30],
+      bass:[{s:0,p:0},{s:10,p:3},{s:16,p:0},{s:26,p:2}]},
+    rules:[
+      {type:'backbeat', lane:'snare', steps:[4,12,20,28]},
+      {type:'noAdjacent', lane:'kick'},
+      {type:'kickBassLock', tolerance:0},
+      {type:'maxFillLength', lane:'hat', n:4},
+      {type:'noOverlap', a:'hat', b:'ohat', why:'Same cymbal: it can\'t be open and closed at once.'},
+      {type:'noteAt', lane:'lead', steps:[16], pitch:0, label:'Lead answers with the home note on bar 2, beat 1'},
+      {type:'density', max:0.22},
+      {type:'distinctPitches', lane:'bass', min:3, optional:true},
+      {type:'noteCount', lane:'lead', min:2, max:4, optional:true},
+    ],
+    budget:{moves:10}, star3:{maxMoves:8}, tools:['draw','move','resize','velocity'],
+    hint:'Work rule by rule. Two kick flams, one missing snare, one bass note a step late, hats clashing with both open hats, and one long hat run in bar 2.',
+    unlocks:[] },
+];
+
+/* =====================================================================
+   3. STATE & STORAGE
+   ===================================================================== */
+const S = {
+  screen:'title', idx:0, L:null,
+  notes:[], undo:[], redo:[], edits:0, hints:0, checks:0, listens:0,
+  revealed:new Set(), lastCheck:null, initialKeys:new Set(),
+  tool:'draw', cursor:{row:0, step:0}, showCursor:false, selected:null, drag:null,
+  mute:new Set(), solo:new Set(), wasPassing:false, evalRes:null, grooveRes:null, stars:0,
+  playStep:-1, playStepTime:0, playStepDur:0.1, playSource:'player', pulse:0, particles:[], flash:new Map(),
+  colFlash:new Map(), verify:[],
+  save:{ stars:{}, settings:{ reducedMotion:null, metronome:true }, sandbox:null },
+};
+const STORE_KEY = 'groove-puzzles-v1';
+const Store = {
+  load(){ try{ const raw = window.localStorage.getItem(STORE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } },
+  save(){ try{ window.localStorage.setItem(STORE_KEY, JSON.stringify(S.save)); }catch(e){ /* storage blocked: game still works */ } },
+};
+function reducedMotion(){
+  const pref = S.save.settings.reducedMotion;
+  if (pref === null || pref === undefined){
+    try{ return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; }
+  }
+  return !!pref;
+}
+
+/* =====================================================================
+   4. PATTERN HELPERS
+   ===================================================================== */
+const key = n => `${n.lane}:${n.step}:${n.pitch}`;
+const mkNote = (lane, step, pitch=0, len=1, vel=2) => ({lane, step, pitch, len, vel});
+function parsePattern(obj){
+  const out = [];
+  for (const lane in (obj||{})) for (const e of obj[lane]){
+    if (typeof e === 'number') out.push(mkNote(lane, e));
+    else out.push(mkNote(lane, e.s, e.p||0, e.l||1, e.v||2));
+  }
+  return out;
+}
+const cloneNotes = notes => notes.map(n => ({...n}));
+const ln = lane => LANES[lane] ? LANES[lane].name : lane;
+const lnl = lane => ln(lane).toLowerCase();
+const plural = (n, w) => `${n} ${w}${n===1?'':'s'}`;
+function pitchName(lane, p){
+  const m = LANES[lane].midi[p]; const nm = NOTE_NAMES[m % 12];
+  return m % 12 === 0 ? `${nm} (home ⌂)` : nm;
+}
+/** Human label for a step: "beat 2", 'the "and" of 3', with the bar for 2-bar loops. */
+function stepLabel(s, L){
+  const spb = L.stepsPerBeat, perBar = spb*4, bar = Math.floor(s/perBar), w = s % perBar;
+  const beat = Math.floor(w/spb) + 1, sub = w % spb;
+  let t;
+  if (sub === 0) t = `beat ${beat}`;
+  else if (spb === 4) t = sub === 2 ? `the "and" of ${beat}` : sub === 1 ? `the "e" of ${beat}` : `the "a" of ${beat}`;
+  else if (spb === 2) t = `the "and" of ${beat}`;
+  else t = `step ${s+1}`;
+  return (L.bars > 1 ? `bar ${bar+1}, ` : '') + t;
+}
+function joinAnd(a){ return a.length <= 1 ? a.join('') : a.slice(0,-1).join(', ') + ' and ' + a[a.length-1]; }
+function listSteps(steps, L){
+  const spb = L.stepsPerBeat;
+  if (L.bars === 1 && steps.every(s => s % spb === 0))
+    return (steps.length > 1 ? 'beats ' : 'beat ') + joinAnd(steps.map(s => s/spb + 1));
+  if (steps.length > 4) return 'steps ' + steps.map(s => s+1).join(', ');
+  return joinAnd(steps.map(s => stepLabel(s, L)));
+}
+function rangeText(min, max){
+  if (max == null) return `At least ${min}`;
+  if (min === max) return `Exactly ${min}`;
+  if (!min) return `At most ${max}`;
+  return `${min} to ${max}`;
+}
+/** Analysis context: notes grouped per lane, sorted by step. */
+function makeCtx(notes, L, extra={}){
+  const by = {};
+  for (const n of notes) (by[n.lane] || (by[n.lane] = [])).push(n);
+  for (const k in by) by[k].sort((a,b) => a.step-b.step || a.pitch-b.pitch);
+  return { notes, by, L, initial:extra.initial||[], target:extra.target||[], checkSnapshot:extra.checkSnapshot };
+}
+const laneNotes = (c, lane) => c.by[lane] || [];
+const hasOnset = (c, lane, step, pitch) => laneNotes(c, lane).some(n => n.step === step && (pitch == null || n.pitch === pitch));
+const onsetSteps = (c, lane) => [...new Set(laneNotes(c, lane).map(n => n.step))].sort((a,b) => a-b);
+const sounding = (c, lane, step) => laneNotes(c, lane).some(n => step >= n.step && step < n.step + n.len);
+function runs(steps){ // consecutive runs of steps -> [{start,len}]
+  const out = []; let cur = null;
+  for (const s of steps){ if (cur && s === cur.start + cur.len) cur.len++; else { cur = {start:s, len:1}; out.push(cur); } }
+  return out;
+}
+const longestRun = steps => runs(steps).reduce((b, r) => r.len > b.len ? r : b, {start:-1, len:0});
+function adjacentPairs(steps){ const out=[]; for (let i=1;i<steps.length;i++) if (steps[i] === steps[i-1]+1) out.push([steps[i-1], steps[i]]); return out; }
+/** Note covering a grid cell (onset or held tail) in a lane row. */
+function noteAtCell(notes, lane, step, pitch){
+  return notes.find(n => n.lane === lane && (LANES[lane].pitched ? n.pitch === pitch : true) && step >= n.step && step < n.step + n.len) || null;
+}
+
+/* =====================================================================
+   5. RULES ENGINE. Each rule type: text(rule, level), why, check(ctx, rule) -> {pass, detail}
+   ===================================================================== */
+const RULES = {
+  noteAt: {
+    text:(r,L) => `${ln(r.lane)}${r.pitch!=null ? ` playing ${pitchName(r.lane, r.pitch)}` : ''} on ${listSteps(r.steps, L)}`,
+    check:(c,r) => { const hit = r.steps.filter(s => hasOnset(c, r.lane, s, r.pitch)).length;
+      return {pass: hit === r.steps.length, detail:`${hit} of ${r.steps.length} placed`}; } },
+  backbeat: {
+    text:(r,L) => `Backbeat: ${lnl(r.lane)} on ${listSteps(r.steps, L)}`,
+    why:'The backbeat is the snap on beats 2 and 4 that makes heads nod.',
+    check:(c,r) => RULES.noteAt.check(c, r) },
+  silentSteps: {
+    text:(r,L) => `${ln(r.lane)} stays quiet on ${listSteps(r.steps, L)}`,
+    why:'Leaving a gap lets the other parts be heard.',
+    check:(c,r) => { const bad = r.steps.filter(s => sounding(c, r.lane, s));
+      return {pass:!bad.length, detail: bad.length ? `still sounding on step ${bad.map(s=>s+1).join(', ')}` : 'quiet there'}; } },
+  noteCount: {
+    text:r => `${rangeText(r.min, r.max)} ${lnl(r.lane)} notes`,
+    check:(c,r) => { const n = laneNotes(c, r.lane).length;
+      return {pass: n >= (r.min||0) && (r.max == null || n <= r.max), detail:`you have ${n}`}; } },
+  noOverlap: {
+    text:r => `${ln(r.a)} and ${lnl(r.b)} never start on the same step`,
+    why:'Two sounds on the same step can blur together.',
+    check:(c,r) => { const A = new Set(onsetSteps(c, r.a)); const clash = onsetSteps(c, r.b).filter(s => A.has(s));
+      return {pass:!clash.length, detail: clash.length ? `clash on step ${clash.map(s=>s+1).join(', ')}` : 'no clashes'}; } },
+  noAdjacent: {
+    text:r => `No ${lnl(r.lane)} double-hits (two hits side by side)`,
+    why:'Two hits side by side sound like a stumble. Drummers call it a "flam".',
+    check:(c,r) => { const p = adjacentPairs(onsetSteps(c, r.lane));
+      return {pass:!p.length, detail: p.length ? p.map(([a,b]) => `steps ${a+1}-${b+1}`).join(', ') : 'clean'}; } },
+  density: {
+    text:(r,L) => { const lanes = r.lanes || L.lanes, cells = L.steps*lanes.length;
+      const maxN = Math.floor(r.max*cells + 1e-9);
+      return `Breathing room: ${maxN} notes or fewer in total (${Math.round(r.max*100)}% of the grid)`; },
+    why:'Empty space is part of the groove.',
+    check:(c,r) => { const lanes = r.lanes || c.L.lanes; const n = c.notes.filter(x => lanes.includes(x.lane)).length;
+      const d = n/(c.L.steps*lanes.length);
+      return {pass: d <= r.max + 1e-9 && d >= (r.min||0) - 1e-9, detail:`${n} notes now (${Math.round(d*100)}% full)`}; } },
+  syncopation: {
+    text:r => `At least ${plural(r.min, lnl(r.lane)+' hit')} between the beats`,
+    why:'Syncopation = hits between the beats. It adds bounce.',
+    check:(c,r) => { const n = laneNotes(c, r.lane).filter(x => x.step % c.L.stepsPerBeat !== 0).length;
+      return {pass: n >= r.min, detail:`${n} off the beat`}; } },
+  kickBassLock: {
+    text:r => r.tolerance ? `Every bass note starts within ${r.tolerance} step of a kick` : 'Every bass note starts together with a kick',
+    why:'When bass and kick start together they hit as one big punch.',
+    check:(c,r) => { const K = onsetSteps(c, 'kick'); const B = laneNotes(c, 'bass');
+      const ok = B.filter(b => K.some(k => Math.abs(k - b.step) <= (r.tolerance||0))).length;
+      return {pass: B.length > 0 && ok === B.length, detail: B.length ? `${ok} of ${B.length} bass notes locked` : 'no bass notes yet'}; } },
+  maxFillLength: {
+    text:r => `${ln(r.lane)} rests: never more than ${r.n} in a row`,
+    why:'Even busy parts need tiny rests to breathe.',
+    check:(c,r) => { const lr = longestRun(onsetSteps(c, r.lane));
+      return {pass: lr.len <= r.n, detail:`longest run: ${lr.len}`}; } },
+  minRun: {
+    text:r => `A ${lnl(r.lane)} roll: ${r.n} or more in a row`,
+    why:'A roll is a quick burst of hits back to back.',
+    check:(c,r) => { const lr = longestRun(onsetSteps(c, r.lane));
+      return {pass: lr.len >= r.n, detail:`longest run: ${lr.len}`}; } },
+  cover: {
+    text:(r,L) => `${r.lanes.map(ln).join(' or ')} on ${listSteps(r.steps, L)}`,
+    check:(c,r) => { const hit = r.steps.filter(s => r.lanes.some(l => hasOnset(c, l, s))).length;
+      return {pass: hit === r.steps.length, detail:`${hit} of ${r.steps.length} covered`}; } },
+  added: {
+    text:r => r.min === r.max ? `Add exactly ${plural(r.min,'note')}` : r.min ? `Add ${r.min} to ${r.max} notes` : `Add at most ${plural(r.max,'note')}`,
+    check:(c,r) => { const I = new Set(c.initial.map(key)); const a = c.notes.filter(n => !I.has(key(n))).length;
+      return {pass: a >= (r.min||0) && a <= r.max, detail:`${a} added`}; } },
+  matchTarget: {
+    text:r => r.lanes ? `Match the hidden ${joinAnd(r.lanes.map(lnl))} part` : 'Match the hidden target beat',
+    why:'Right lane, right step' + ' (and right row for bass or lead).',
+    check:(c,r) => {
+      const lanes = r.lanes || c.L.lanes;
+      const T = c.target.filter(n => lanes.includes(n.lane)), P = c.notes.filter(n => lanes.includes(n.lane));
+      const Tk = new Set(T.map(key)), exact = P.filter(n => Tk.has(key(n))).length;
+      return {pass: exact === T.length && P.length === T.length, detail: c.checkSnapshot || 'press Check to compare'}; } },
+  noteLength: {
+    text:(r,L) => `Hold the ${lnl(r.lane)} note on ${stepLabel(r.step, L)} for ${r.max ? `${r.min}-${r.max}` : `at least ${r.min}`} steps`,
+    why:'Longer notes fill space without adding more hits.',
+    check:(c,r) => { const n = laneNotes(c, r.lane).find(x => x.step === r.step);
+      if (!n) return {pass:false, detail:'no note there yet'};
+      return {pass: n.len >= r.min && (r.max == null || n.len <= r.max), detail:`it lasts ${plural(n.len,'step')}`}; } },
+  distinctPitches: {
+    text:r => `${ln(r.lane)} uses at least ${r.min} different notes (rows)`,
+    why:'A couple of different notes turns a thud into a tune.',
+    check:(c,r) => { const n = new Set(laneNotes(c, r.lane).map(x => x.pitch)).size;
+      return {pass: n >= r.min, detail:`${n} different`}; } },
+  accent: {
+    text:(r,L) => `Loud ${lnl(r.lane)} hits on ${listSteps(r.steps, L)}`,
+    why:'Velocity = how hard a note is hit. Loud hits stand out.',
+    check:(c,r) => { const hit = r.steps.filter(s => laneNotes(c, r.lane).some(n => n.step === s && n.vel === 3)).length;
+      return {pass: hit === r.steps.length, detail:`${hit} of ${r.steps.length} loud`}; } },
+  ghostNotes: {
+    text:r => `At least ${plural(r.min, `soft "ghost" ${lnl(r.lane)} note`)}`,
+    why:'Ghost notes are soft hits you feel more than hear. Set them with the Velocity tool.',
+    check:(c,r) => { const n = laneNotes(c, r.lane).filter(x => x.vel === 1).length;
+      return {pass: n >= r.min, detail:`${n} soft`}; } },
+  velVariety: {
+    text:r => `${ln(r.lane)} mixes at least ${r.min} loudness levels`,
+    why:'Mixing loud and soft makes a part feel played by a human.',
+    check:(c,r) => { const n = new Set(laneNotes(c, r.lane).map(x => x.vel)).size;
+      return {pass: n >= r.min, detail:`${n} level${n===1?'':'s'}`}; } },
+  rangeCount: {
+    text:(r,L) => `${rangeText(r.min, r.max)} hits from ${stepLabel(r.from, L)} to ${stepLabel(r.to, L)}`,
+    why:'A fill is a short burst that leads back to the top of the loop.',
+    check:(c,r) => { const n = c.notes.filter(x => r.lanes.includes(x.lane) && x.step >= r.from && x.step <= r.to).length;
+      return {pass: n >= r.min && n <= r.max, detail:`${n} there now`}; } },
+  accentIn: {
+    text:(r,L) => `A loud hit between ${stepLabel(r.from, L)} and ${stepLabel(r.to, L)}`,
+    why:'Landing on a loud hit makes the fill sound deliberate.',
+    check:(c,r) => { const ok = c.notes.some(x => r.lanes.includes(x.lane) && x.step >= r.from && x.step <= r.to && x.vel === 3);
+      return {pass: ok, detail: ok ? 'landed' : 'no loud hit there yet'}; } },
+};
+
+/** Evaluate every rule of a level against a pattern. */
+function evaluateNotes(L, notes, extra){
+  const ctx = makeCtx(notes, L, {initial:L.initialNotes, target:L.targetNotes||[], ...(extra||{})});
+  const res = L.rules.map(r => {
+    const R = RULES[r.type];
+    if (!R) return {rule:r, pass:false, detail:'unknown rule', text:`Unknown rule "${r.type}"`, why:''};
+    const out = R.check(ctx, r);
+    return {rule:r, pass:!!out.pass, detail:out.detail||'', text:r.label || R.text(r, L), why: r.why != null ? r.why : (R.why||'')};
+  });
+  const req = res.filter(x => !x.rule.optional), opt = res.filter(x => x.rule.optional);
+  return { res, requiredPass: req.every(x => x.pass), optionalPass: opt.every(x => x.pass),
+           reqDone: req.filter(x => x.pass).length, reqTotal: req.length, optDone: opt.filter(x => x.pass).length, optTotal: opt.length };
+}
+/** Mastermind-style comparison used by the Check button in ghost levels. */
+function compareToTarget(L, notes, lanes){
+  lanes = lanes || L.lanes;
+  const T = L.targetNotes.filter(n => lanes.includes(n.lane)), P = notes.filter(n => lanes.includes(n.lane));
+  const Tk = new Set(T.map(key)), exact = P.filter(n => Tk.has(key(n))).length;
+  const tSteps = new Set(T.map(n => n.lane+':'+n.step));
+  const near = P.filter(n => !Tk.has(key(n)) && LANES[n.lane].pitched && tSteps.has(n.lane+':'+n.step)).length;
+  const extra = P.length - exact;
+  let s = `${exact} of ${T.length} right`;
+  if (extra) s += ` · ${extra} not in the target`;
+  if (near) s += ` (${near} at the right time, wrong note)`;
+  return s;
+}
+
+/* =====================================================================
+   6. SCORING: groove quality (5 transparent sub-scores) and stars
+   ===================================================================== */
+function grooveScore(L, notes, editable){
+  editable = editable || (() => true);
+  const spb = L.stepsPerBeat, lanes = L.lanes, bars = L.bars;
+  const ns = notes.filter(n => lanes.includes(n.lane));
+  const parts = [];
+  const lbl = s => stepLabel(s, L);
+
+  // 1. Timing & placement: heavy hits on the 8th-note grid (1 free off-grid hit per bar)
+  const grid8 = Math.max(1, spb/2);
+  if (lanes.some(l => HEAVY.has(l))){
+    const heavy = ns.filter(n => HEAVY.has(n.lane)), off = heavy.filter(n => n.step % grid8 !== 0);
+    const over = Math.max(0, off.length - bars);
+    const score = heavy.length ? Math.max(0, 20 - 5*over) : 0;
+    const why = !heavy.length ? 'No kick, snare or bass yet.' :
+      off.length ? `${plural(off.length,'heavy hit')} between 8th notes (${bars} per bar is fine).` :
+      'Every heavy hit (kick, snare, clap, bass) sits on the 8th-note grid.';
+    const bad = off.filter(n => editable(n.lane));
+    parts.push({key:'placement', name:'Timing & placement', score, applicable:true, why,
+      tip: !heavy.length ? 'Start with a kick on beat 1.' :
+        bad.length && over > 0 ? (() => { const n = bad[0], to = Math.round(n.step/grid8)*grid8 % L.steps;
+          return `The ${lnl(n.lane)} on ${lbl(n.step)} (step ${n.step+1}) sits between 8th notes; try step ${to+1}.`; })() : null});
+  }
+
+  // 2. Variety: lanes in use + how many different beat shapes
+  {
+    const used = new Set(ns.map(n => n.lane));
+    const laneScore = 10*used.size/lanes.length;
+    const beats = L.steps/spb, sigs = [];
+    for (let b = 0; b < beats; b++){
+      sigs.push(ns.filter(n => n.step >= b*spb && n.step < (b+1)*spb).map(n => n.lane+(n.step-b*spb)).sort().join(','));
+    }
+    const distinct = new Set(sigs).size, cap = Math.min(beats, 4) - 1;
+    const rhythm = ns.length ? 10*Math.min(1, cap > 0 ? (distinct-1)/cap : 1) : 0;
+    const score = laneScore + rhythm;
+    const unused = lanes.filter(l => !used.has(l) && editable(l));
+    parts.push({key:'variety', name:'Variety', score, applicable:true,
+      why:`${used.size} of ${lanes.length} lanes used; ${distinct} different beat shape${distinct===1?'':'s'}.`,
+      tip: !ns.length ? 'Put something down, anything! Then listen.' :
+        unused.length ? `The ${lnl(unused[0])} lane is empty; one or two hits there would add color.` :
+        'Every beat sounds alike; try moving one hit to an "and" (halfway between beats).'});
+  }
+
+  // 3. Use of space: density sweet spot 12–40%
+  {
+    const d = ns.length/(L.steps*lanes.length), lo = 0.12, hi = 0.40, cap = 0.75;
+    const score = d < lo ? 20*d/lo : d > hi ? 20*Math.max(0, (cap-d)/(cap-hi)) : 20;
+    let tip = null;
+    if (d > hi){
+      const counts = lanes.filter(editable).map(l => [l, ns.filter(n => n.lane === l).length]).sort((a,b) => b[1]-a[1]);
+      if (counts.length && counts[0][1]){
+        const l = counts[0][0], steps = [...new Set(ns.filter(n => n.lane === l).map(n => n.step))].sort((a,b)=>a-b);
+        const lr = longestRun(steps); const s = lr.len > 2 ? lr.start + Math.floor(lr.len/2) : steps[Math.floor(steps.length/2)];
+        tip = `Your ${lnl(l)}${l.endsWith('s')?'':'s'} ${steps.length >= L.steps*0.75 ? 'never rest' : 'are busy'}; try dropping ${lbl(s)} (step ${s+1}).`;
+      }
+    } else if (d < lo){
+      tip = lanes.includes('hat') && editable('hat') ? 'It\'s a bit empty. Try a hat on each "and" (halfway between beats).'
+                                                      : 'It\'s a bit empty. Try one more hit on a beat.';
+    }
+    parts.push({key:'space', name:'Use of space', score, applicable:true,
+      why:`${Math.round(d*100)}% of the grid is filled (sweet spot 12-40%).`, tip});
+  }
+
+  // 4. Backbeat strength: snare/clap on the backbeat steps
+  {
+    const bl = lanes.filter(l => l === 'snare' || l === 'clap');
+    if (bl.length){
+      const perBar = spb*4, targets = [];
+      for (let b = 0; b < bars; b++) (L.backbeat || [spb, spb*3]).forEach(s => targets.push(b*perBar + s));
+      const hitSet = new Set(ns.filter(n => bl.includes(n.lane)).map(n => n.step));
+      const hit = targets.filter(s => hitSet.has(s)), miss = targets.filter(s => !hitSet.has(s));
+      const named = L.backbeat ? 'backbeat' : 'beats 2 & 4';
+      const lane = bl.find(editable) || bl[0];
+      parts.push({key:'backbeat', name:'Backbeat strength', score:20*hit.length/targets.length, applicable:true,
+        why:`${hit.length} of ${targets.length} backbeat hits (${named}).`,
+        tip: miss.length && bl.some(editable) ? `Nothing snaps on ${lbl(miss[0])}; try a ${lnl(lane)} on step ${miss[0]+1}.` : null});
+    } else parts.push({key:'backbeat', name:'Backbeat strength', score:0, applicable:false, why:'No snare or clap lane in this loop.', tip:null});
+  }
+
+  // 5. Clutter: flams in kick/snare/clap, and pile-ups of 4+ sounds on one step
+  {
+    const flams = [];
+    for (const l of ['kick','snare','clap']) if (lanes.includes(l))
+      adjacentPairs([...new Set(ns.filter(n => n.lane === l).map(n => n.step))].sort((a,b)=>a-b)).forEach(p => flams.push([l, ...p]));
+    const perStep = new Map(); ns.forEach(n => perStep.set(n.step, (perStep.get(n.step)||0)+1));
+    const piles = [...perStep].filter(([,k]) => k >= 4);
+    const score = Math.max(0, 20 - 5*flams.length - 3*piles.length);
+    const fl = flams.find(f => editable(f[0]));
+    parts.push({key:'clutter', name:'Clean hits', score, applicable:true,
+      why: flams.length || piles.length ? `${plural(flams.length,'double-hit')}, ${plural(piles.length,'pile-up')} (4+ sounds on one step).` : 'No double-hits or pile-ups.',
+      tip: fl ? `The ${lnl(fl[0])}s on steps ${fl[1]+1} and ${fl[2]+1} rub together (a "flam"); drop one.` :
+           piles.length ? `Step ${piles[0][0]+1} has ${piles[0][1]} sounds at once; thin it out.` : null});
+  }
+
+  const app = parts.filter(p => p.applicable);
+  const total = Math.round(100*app.reduce((a,p) => a+p.score, 0)/(20*app.length));
+  // ONE tip: from the weakest sub-score under 90%
+  let tip = 'Sounds tight. Try muting one lane at a time (M) to hear what each part adds.';
+  const weak = app.filter(p => p.score < 18 && p.tip).sort((a,b) => a.score-b.score);
+  if (weak.length) tip = weak[0].tip;
+  return {total, parts, tip};
+}
+
+/** Stars + the reasons behind them. */
+function starsFor(L, ev, gr, st){
+  const s3 = L.star3 || {};
+  const c3 = [];
+  if (s3.maxMoves != null) c3.push({ok: st.edits <= s3.maxMoves, text:`${s3.maxMoves} edits or fewer (you: ${st.edits})`});
+  if (s3.maxHints != null) c3.push({ok: st.hints <= s3.maxHints, text: s3.maxHints ? `${s3.maxHints} hints or fewer (you: ${st.hints})` : `No revealed notes (you: ${st.hints})`});
+  if (s3.maxChecks != null) c3.push({ok: st.checks <= s3.maxChecks, text:`${s3.maxChecks} checks or fewer (you: ${st.checks})`});
+  if (s3.minGroove != null) c3.push({ok: gr.total >= s3.minGroove, text:`Groove ${s3.minGroove}+ (you: ${gr.total})`});
+  const crit = [
+    {ok: ev.requiredPass, text:`All goals (${ev.reqDone}/${ev.reqTotal})`},
+    {ok: ev.requiredPass && ev.optionalPass, text: ev.optTotal ? `Bonus goals (${ev.optDone}/${ev.optTotal})` : 'Bonus goals (none here: free star)'},
+    {ok: ev.requiredPass && ev.optionalPass && c3.every(c => c.ok), text: c3.map(c => c.text).join(' · ') || 'Free star'},
+  ];
+  let stars = 0;
+  if (crit[0].ok){ stars = 1; if (crit[1].ok){ stars = 2; if (crit[2].ok) stars = 3; } }
+  return {stars, crit, c3};
+}
+
+/* =====================================================================
+   7. LEVEL NORMALISATION & SOLVABILITY CHECK (runs at load)
+   ===================================================================== */
+function normaliseLevel(L, i){
+  L.index = i;
+  L.stepsPerBeat = L.stepsPerBeat || 4;
+  L.swing = L.swing || 0;
+  L.locked = L.locked || [];
+  L.budget = L.budget || {};
+  L.star3 = L.star3 || {minGroove:70};
+  L.tools = L.tools || ['draw'];
+  L.unlocks = L.unlocks || [];
+  L.bars = L.steps/(L.stepsPerBeat*4);
+  L.initialNotes = parsePattern(L.initial);
+  L.targetNotes = L.target ? parsePattern(L.target) : null;
+  L.solutionNotes = parsePattern(L.solution || L.target);
+  return L;
+}
+/** Fewest edits from one pattern to another (a Move counts as one edit when allowed). */
+function minMoves(from, to, canMove){
+  const F = new Map(from.map(n => [key(n), n])), T = new Map(to.map(n => [key(n), n]));
+  const adds = {}, rems = {}; let mods = 0;
+  for (const [k, n] of T){
+    const f = F.get(k);
+    if (!f){ adds[n.lane] = (adds[n.lane]||0)+1; if (n.len !== 1) mods++; if (n.vel !== 2) mods++; }
+    else { if (f.len !== n.len) mods++; if (f.vel !== n.vel) mods++; }
+  }
+  for (const [k, n] of F) if (!T.has(k)) rems[n.lane] = (rems[n.lane]||0)+1;
+  let total = mods;
+  for (const lane of new Set([...Object.keys(adds), ...Object.keys(rems)])){
+    const a = adds[lane]||0, r = rems[lane]||0;
+    total += canMove ? Math.max(a, r) : a + r;
+  }
+  return total;
+}
+function verifyLevel(L, unlockedBefore){
+  const problems = [];
+  const assert = (cond, msg) => { console.assert(cond, `[Groove Puzzles] Level ${L.index+1} "${L.title}": ${msg}`); if (!cond) problems.push(msg); };
+  const K = KINDS[L.kind];
+  assert(!!K, `unknown kind "${L.kind}"`);
+  assert(Number.isInteger(L.bars) && L.bars >= 1, 'steps must be whole bars');
+  for (const r of L.rules) assert(!!RULES[r.type], `unknown rule type "${r.type}"`);
+  for (const n of [...L.initialNotes, ...L.solutionNotes, ...(L.targetNotes||[])]){
+    assert(L.lanes.includes(n.lane), `note in lane "${n.lane}" which the level does not have`);
+    assert(n.step >= 0 && n.step + n.len <= L.steps, `note out of bounds at step ${n.step+1}`);
+    if (LANES[n.lane] && LANES[n.lane].pitched) assert(n.pitch >= 0 && n.pitch < LANES[n.lane].midi.length, 'pitch out of range');
+    else assert(n.len === 1 && n.pitch === 0, 'drum notes have length 1');
+  }
+  const ev = evaluateNotes(L, L.solutionNotes);
+  ev.res.forEach(x => assert(x.pass, `solution fails ${x.rule.optional ? 'bonus ' : ''}rule "${x.text}" (${x.detail})`));
+  const ev0 = evaluateNotes(L, L.initialNotes);
+  assert(!ev0.requiredPass, 'the starting loop already passes. Nothing to solve.');
+  const canMove = L.tools.includes('move');
+  const mm = minMoves(L.initialNotes, L.solutionNotes, canMove);
+  if (L.budget.moves != null) assert(mm <= L.budget.moves, `solution needs ${mm} moves but the budget is ${L.budget.moves}`);
+  if (L.star3.maxMoves != null) assert(mm <= L.star3.maxMoves, `solution needs ${mm} edits but ★★★ par is ${L.star3.maxMoves}`);
+  if (L.star3.minGroove != null){
+    const g = grooveScore(L, L.solutionNotes).total;
+    assert(g >= L.star3.minGroove, `solution groove ${g} is below the ★★★ target ${L.star3.minGroove}`);
+  }
+  const I = new Set(L.initialNotes.map(key)), Sk = new Set(L.solutionNotes.map(key));
+  if (!K.canRemoveInitial) assert([...I].every(k => Sk.has(k)), 'fill level solution removes a starting note');
+  if (!K.canAdd) assert([...Sk].every(k => I.has(k)), 'remove level solution adds a note');
+  if (L.budget.adds != null) assert([...Sk].filter(k => !I.has(k)).length <= L.budget.adds, 'solution adds more notes than the budget');
+  for (const lane of L.locked){
+    const a = L.initialNotes.filter(n => n.lane === lane).map(key).sort().join(), b = L.solutionNotes.filter(n => n.lane === lane).map(key).sort().join();
+    assert(a === b, `locked lane ${lane} differs in the solution`);
+  }
+  if (L.solutionNotes.some(n => n.len > 1 && !I.has(key(n)) || n.len > 1 && I.has(key(n)) && L.initialNotes.find(x => key(x) === key(n)).len !== n.len))
+    assert(L.tools.includes('resize'), 'solution needs the Resize tool');
+  if (L.solutionNotes.some(n => n.vel !== 2 && !(I.has(key(n)) && L.initialNotes.find(x => key(x) === key(n)).vel === n.vel)))
+    assert(L.tools.includes('velocity'), 'solution needs the Velocity tool');
+  if (unlockedBefore){
+    for (const lane of L.lanes) assert(lane === 'kick' || unlockedBefore.has('lane:'+lane), `lane "${lane}" is used before it is unlocked`);
+    for (const t of L.tools) assert(t === 'draw' || unlockedBefore.has('tool:'+t), `tool "${t}" is used before it is unlocked`);
+  }
+  return {id:L.id, title:L.title, ok:!problems.length, problems, minMoves:mm,
+          solutionGroove:grooveScore(L, L.solutionNotes).total};
+}
+function verifyLevels(){
+  const unlocked = new Set();
+  const results = LEVELS.map(L => { const r = verifyLevel(L, unlocked); L.unlocks.forEach(u => unlocked.add(u)); return r; });
+  const bad = results.filter(r => !r.ok);
+  if (bad.length){ console.error(`[Groove Puzzles] ${bad.length} level(s) failed the solvability check:`); bad.forEach(b => console.error(` - ${b.title}: ${b.problems.join('; ')}`)); }
+  else console.info(`[Groove Puzzles] all ${results.length} levels verified solvable (every solution earns ★★★).`);
+  return results;
+}
+
+/* =====================================================================
+   8. AUDIO ENGINE (all sounds synthesised)
+   ===================================================================== */
+const AudioEngine = (() => {
+  let ctx = null, master = null, noiseBuf = null, lastOpen = null;
+  function ensure(){
+    if (!ctx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      try { ctx = new AC(); } catch(e){ return null; }
+      master = ctx.createGain(); master.gain.value = 0.85;
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.18;
+      const lim = ctx.createDynamicsCompressor();
+      lim.threshold.value = -1.5; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.06;
+      master.connect(comp); comp.connect(lim); lim.connect(ctx.destination);
+      noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random()*2 - 1;
+    }
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    return ctx;
+  }
+  const now = () => ctx ? ctx.currentTime : performance.now()/1000;
+  const mtof = m => 440*Math.pow(2, (m-69)/12);
+  function env(g, t, peak, attack, decay){
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
+  }
+  function noise(t, dur){ const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.start(t, Math.random()*0.4); s.stop(t + dur); return s; }
+  function osc(type, f){ const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; return o; }
+  function filt(type, f, q){ const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; if (q) b.Q.value = q; return b; }
+  const voices = {
+    kick(t, v){
+      const o = osc('sine', 160), g = ctx.createGain();
+      o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(50, t+0.11); o.frequency.exponentialRampToValueAtTime(38, t+0.4);
+      env(g, t, v, 0.003, 0.42); o.connect(g).connect(master); o.start(t); o.stop(t+0.5);
+      const c = osc('triangle', 1400), cg = ctx.createGain();
+      c.frequency.setValueAtTime(1400, t); c.frequency.exponentialRampToValueAtTime(180, t+0.025);
+      env(cg, t, v*0.22, 0.001, 0.025); c.connect(cg).connect(master); c.start(t); c.stop(t+0.06);
+    },
+    snare(t, v){
+      const n = noise(t, 0.3), f = filt('highpass', 1300), g = ctx.createGain();
+      env(g, t, v*0.75, 0.001, 0.19); n.connect(f).connect(g).connect(master);
+      const o = osc('triangle', 220), og = ctx.createGain();
+      o.frequency.setValueAtTime(230, t); o.frequency.exponentialRampToValueAtTime(160, t+0.08);
+      env(og, t, v*0.5, 0.001, 0.09); o.connect(og).connect(master); o.start(t); o.stop(t+0.15);
+    },
+    clap(t, v){
+      const n = noise(t, 0.35), f = filt('bandpass', 1500, 1.1), g = ctx.createGain(), p = v*0.85;
+      for (let i = 0; i < 3; i++){ const tt = t + i*0.011; g.gain.setValueAtTime(p, tt); g.gain.exponentialRampToValueAtTime(p*0.12, tt+0.009); }
+      g.gain.setValueAtTime(p, t+0.034); g.gain.exponentialRampToValueAtTime(0.0001, t+0.24);
+      n.connect(f).connect(g).connect(master);
+    },
+    hat(t, v, open){
+      const n = noise(t, open ? 0.6 : 0.12), f = filt('highpass', 7200), f2 = filt('peaking', 10000, 1), g = ctx.createGain();
+      f2.gain.value = 6;
+      env(g, t, v*(open ? 0.5 : 0.55), 0.001, open ? 0.42 : 0.05);
+      n.connect(f).connect(f2).connect(g).connect(master);
+      if (open) lastOpen = {g, t};
+      else if (lastOpen && lastOpen.t < t && t < lastOpen.t + 0.5){   // closed hat chokes the open hat
+        const p = lastOpen.g.gain;
+        if (p.cancelAndHoldAtTime) p.cancelAndHoldAtTime(t); else p.cancelScheduledValues(t);
+        p.setTargetAtTime(0.0001, t, 0.01); lastOpen = null;
+      }
+    },
+    perc(t, v){
+      const o = osc('sine', 1250), g = ctx.createGain();
+      o.frequency.setValueAtTime(1250, t); o.frequency.exponentialRampToValueAtTime(780, t+0.03);
+      env(g, t, v*0.7, 0.001, 0.09); o.connect(g).connect(master); o.start(t); o.stop(t+0.14);
+      const n = noise(t, 0.03), f = filt('bandpass', 3000, 2), ng = ctx.createGain();
+      env(ng, t, v*0.25, 0.001, 0.015); n.connect(f).connect(ng).connect(master);
+    },
+    bass(t, v, midi, dur){
+      const fr = mtof(midi), o1 = osc('sine', fr), o2 = osc('triangle', fr), m2 = ctx.createGain(), lp = filt('lowpass', 750, 3), g = ctx.createGain();
+      m2.gain.value = 0.35;
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t+0.006);
+      g.gain.setTargetAtTime(v*0.7, t+0.006, 0.09); g.gain.setTargetAtTime(0.0001, t + Math.max(0.04, dur - 0.02), 0.03);
+      lp.frequency.setValueAtTime(1100, t); lp.frequency.exponentialRampToValueAtTime(420, t+0.2);
+      o1.connect(g); o2.connect(m2).connect(g); g.connect(lp).connect(master);
+      o1.start(t); o2.start(t); o1.stop(t+dur+0.3); o2.stop(t+dur+0.3);
+    },
+    lead(t, v, midi, dur){
+      const fr = mtof(midi), a = osc('sawtooth', fr), b = osc('sawtooth', fr), lp = filt('lowpass', 2400, 2), g = ctx.createGain();
+      a.detune.value = -7; b.detune.value = 7;
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t+0.012);
+      g.gain.setTargetAtTime(v*0.6, t+0.012, 0.12); g.gain.setTargetAtTime(0.0001, t + Math.max(0.05, dur - 0.02), 0.05);
+      a.connect(lp); b.connect(lp); lp.connect(g).connect(master);
+      a.start(t); b.start(t); a.stop(t+dur+0.4); b.stop(t+dur+0.4);
+    },
+  };
+  function play(lane, t, note, stepDur){
+    if (!ctx) return;
+    const v = VEL[note.vel].gain * LANES[lane].gain, dur = note.len*stepDur;
+    switch(lane){
+      case 'kick': return voices.kick(t, v);
+      case 'snare': return voices.snare(t, v);
+      case 'clap': return voices.clap(t, v);
+      case 'hat': return voices.hat(t, v, false);
+      case 'ohat': return voices.hat(t, v, true);
+      case 'perc': return voices.perc(t, v);
+      case 'bass': return voices.bass(t, v, LANES.bass.midi[note.pitch], dur);
+      case 'lead': return voices.lead(t, v, LANES.lead.midi[note.pitch], dur);
+    }
+  }
+  function click(t, accent){
+    if (!ctx) return;
+    const o = osc('sine', accent ? 1760 : 1320), g = ctx.createGain();
+    env(g, t, accent ? 0.12 : 0.07, 0.001, 0.03); o.connect(g).connect(master); o.start(t); o.stop(t+0.06);
+  }
+  function preview(note, stepDur){ if (!ensure()) return; play(note.lane, ctx.currentTime + 0.005, note, Math.max(stepDur, 0.12)); }
+  function jingle(kind){
+    if (!ensure()) return;
+    const t = ctx.currentTime + 0.02;
+    const seq = kind === 'win' ? [60,63,67,72,75] : kind === 'star' ? [72,79] : [43,39];
+    seq.forEach((m, i) => voices.lead(t + i*0.08, kind === 'bad' ? 0.12 : 0.16, m, 0.16));
+  }
+  return { ensure, now, play, click, preview, jingle, get ready(){ return !!ctx; } };
+})();
+
+/* =====================================================================
+   9. SCHEDULER (lookahead: setTimeout ~25 ms, schedule ~100 ms ahead on the audio clock)
+   ===================================================================== */
+function audible(lane){ return S.solo.size ? S.solo.has(lane) : !S.mute.has(lane); }
+const Seq = {
+  playing:false, step:0, nextTime:0, timer:null, queue:[], source:'player', targetLoops:0,
+  stepDur(){ return 60/S.L.bpm/S.L.stepsPerBeat; },
+  start(){
+    AudioEngine.ensure();
+    this.playing = true; this.step = 0; this.queue = [];
+    this.nextTime = AudioEngine.now() + 0.06;
+    clearTimeout(this.timer); this.tick(); UI.transport();
+  },
+  stop(){
+    this.playing = false; clearTimeout(this.timer); this.queue = [];
+    this.source = 'player'; S.playStep = -1; S.playSource = 'player'; UI.transport();
+  },
+  restartAtTop(){ this.step = 0; this.queue = []; this.nextTime = AudioEngine.now() + 0.05; },
+  tick(){
+    if (!this.playing || !S.L) return;
+    const now = AudioEngine.now();
+    if (this.nextTime < now - 0.2) this.nextTime = now + 0.05;      // woke up late (background tab): resync
+    while (this.nextTime < now + AUDIO_SCHEDULE_AHEAD){ this.schedule(this.step, this.nextTime); this.advance(); }
+    this.timer = setTimeout(() => this.tick(), AUDIO_LOOKAHEAD_MS);
+  },
+  advance(){
+    this.nextTime += this.stepDur();
+    if (++this.step >= S.L.steps){
+      this.step = 0;
+      if (this.source === 'target' && --this.targetLoops <= 0){ this.source = 'player'; setTimeout(() => UI.transport(), 0); }
+    }
+  },
+  schedule(step, t){
+    const L = S.L, dur = this.stepDur();
+    const tt = t + (step % 2 === 1 ? L.swing*dur : 0);              // swing: odd steps lean late
+    const pat = this.source === 'target' ? L.targetNotes : S.notes;
+    for (const n of pat) if (n.step === step && audible(n.lane)) AudioEngine.play(n.lane, tt, n, dur);
+    if (L.metronome && S.save.settings.metronome && step % L.stepsPerBeat === 0 && this.source !== 'target') AudioEngine.click(tt, step === 0);
+    this.queue.push({step, time:tt, dur, source:this.source});
+  },
+};
+
+/* =====================================================================
+   10. GRID RENDERER (Canvas 2D, 60 fps, visuals driven by the audio clock)
+   ===================================================================== */
+const canvas = document.getElementById('grid');
+const g2 = canvas.getContext('2d');
+const G = { rows:[], cw:40, w:0, h:0, ruler:24, dpr:1 };
+function hexA(hex, a){ const n = parseInt(hex.slice(1), 16); return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`; }
+function layoutGrid(){
+  const L = S.L; if (!L) return;
+  const narrow = window.innerWidth < 600;
+  G.dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const drumH = narrow ? 34 : 38, pitchH = narrow ? 22 : 24;
+  G.rows = []; let y = G.ruler;
+  for (const lane of L.lanes){
+    const lp = LANES[lane];
+    if (lp.pitched) for (let p = lp.midi.length-1; p >= 0; p--){ G.rows.push({lane, pitch:p, y, h:pitchH}); y += pitchH; }
+    else { G.rows.push({lane, pitch:0, y, h:drumH}); y += drumH; }
+  }
+  const headW = narrow ? 66 : 108;
+  const avail = document.getElementById('grid-wrap').clientWidth - headW - 2;
+  const minC = narrow ? 20 : 28;
+  G.cw = Math.max(minC, Math.min(72, Math.floor(avail / L.steps)));
+  G.w = G.cw * L.steps; G.h = y;
+  canvas.width = Math.round(G.w*G.dpr); canvas.height = Math.round(G.h*G.dpr);
+  canvas.style.width = G.w + 'px'; canvas.style.height = G.h + 'px';
+  UI.laneHeads();
+}
+function rowY(lane, pitch){ return G.rows.find(r => r.lane === lane && r.pitch === pitch); }
+function roundRect(x, y, w, h, r){
+  g2.beginPath(); g2.moveTo(x+r, y); g2.arcTo(x+w, y, x+w, y+h, r); g2.arcTo(x+w, y+h, x, y+h, r);
+  g2.arcTo(x, y+h, x, y, r); g2.arcTo(x, y, x+w, y, r); g2.closePath();
+}
+function drawNote(n, opts){
+  const r = rowY(n.lane, LANES[n.lane].pitched ? n.pitch : 0); if (!r) return;
+  const lp = LANES[n.lane], cw = G.cw, now = performance.now(), rm = reducedMotion();
+  const fl = S.flash.get(key(n)), k = fl ? Math.max(0, 1 - (now - fl)/240) : 0;
+  const pad = 3, x = n.step*cw + pad, w = n.len*cw - pad*2;
+  let h = r.h - pad*2, y = r.y + pad;
+  if (!lp.pitched){ const hf = [0, 0.48, 0.72, 0.95][n.vel]; const nh = (r.h - pad*2)*hf; y = r.y + (r.h - nh)/2; h = nh; }
+  const dim = !audible(n.lane) ? 0.3 : 1;
+  const alpha = [0, 0.55, 0.85, 1][n.vel] * dim;
+  g2.save();
+  if (k > 0 && !rm){ g2.shadowColor = lp.color; g2.shadowBlur = 22*k; }
+  const grow = rm ? 0 : 2*k;
+  roundRect(x - grow, y - grow, w + grow*2, h + grow*2, 5);
+  g2.fillStyle = hexA(lp.color, Math.min(1, alpha + 0.3*k)); g2.fill();
+  g2.shadowBlur = 0;
+  if (k > 0){ g2.fillStyle = `rgba(255,255,255,${0.45*k})`; g2.fill(); }
+  if (n.vel === 3){ g2.fillStyle = 'rgba(255,255,255,0.75)'; g2.fillRect(x+3, y+2, w-6, 2); }   // loud marker (not colour only)
+  if (n.vel === 1){ g2.strokeStyle = 'rgba(255,255,255,0.6)'; g2.setLineDash([3,3]); g2.lineWidth = 1; roundRect(x+.5, y+.5, w-1, h-1, 5); g2.stroke(); g2.setLineDash([]); }
+  if (opts && opts.pinned){ g2.fillStyle = 'rgba(10,12,30,0.75)'; g2.beginPath(); g2.arc(x + 6, y + 6, 2.6, 0, Math.PI*2); g2.fill(); }
+  if (opts && opts.selected){ g2.strokeStyle = '#fff'; g2.lineWidth = 2; roundRect(x-1, y-1, w+2, h+2, 6); g2.stroke(); }
+  if (lp.pitched && n.len > 1 && S.tool === 'resize'){ g2.fillStyle = 'rgba(255,255,255,.55)'; g2.fillRect(x + w - 4, y + 4, 2, h - 8); }
+  g2.restore();
+}
+function spawnParticles(x, y, color, count, spread){
+  if (reducedMotion()) return;
+  for (let i = 0; i < count && S.particles.length < 260; i++){
+    const a = Math.random()*Math.PI*2, sp = (0.4 + Math.random())*(spread||1.4);
+    S.particles.push({x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - 0.6, life:1, color, size:1.5 + Math.random()*2});
+  }
+}
+function onStepVisual(ev){
+  S.playStep = ev.step; S.playStepTime = ev.time; S.playStepDur = ev.dur; S.playSource = ev.source;
+  const L = S.L, now = performance.now();
+  if (ev.step % L.stepsPerBeat === 0){
+    S.pulse = ev.step % (L.stepsPerBeat*4) === 0 ? 1 : 0.6;
+    const led = document.getElementById('beat-led');
+    led.style.background = ev.step === 0 ? '#ff5d73' : '#8c6cff';
+    setTimeout(() => { led.style.background = ''; }, 90);
+  }
+  if (ev.source === 'target'){ S.colFlash.set(ev.step, now); return; }
+  for (const n of S.notes) if (n.step === ev.step && audible(n.lane)){
+    S.flash.set(key(n), now);
+    const r = rowY(n.lane, LANES[n.lane].pitched ? n.pitch : 0);
+    if (r) spawnParticles(n.step*G.cw + G.cw/2, r.y + r.h/2, LANES[n.lane].color, n.vel + 1);
+  }
+}
+function drawGrid(){
+  const L = S.L; if (!L) return;
+  const cw = G.cw, W = G.w, H = G.h, R = G.ruler, spb = L.stepsPerBeat, rm = reducedMotion();
+  const now = performance.now();
+  g2.setTransform(G.dpr, 0, 0, G.dpr, 0, 0);
+  g2.fillStyle = '#0d1022'; g2.fillRect(0, 0, W, H);
+  // beat shading
+  for (let s = 0; s < L.steps; s++) if (Math.floor(s/spb) % 2 === 1){ g2.fillStyle = 'rgba(255,255,255,0.028)'; g2.fillRect(s*cw, R, cw, H-R); }
+  if (!rm && S.pulse > 0.01){ g2.fillStyle = `rgba(140,108,255,${0.09*S.pulse})`; g2.fillRect(0, R, W, H-R); }
+  // rows
+  let prevLane = null;
+  for (const r of G.rows){
+    const lp = LANES[r.lane];
+    g2.fillStyle = hexA(lp.color, lp.pitched && r.pitch % 5 === 0 ? 0.09 : 0.04); g2.fillRect(0, r.y, W, r.h);
+    if (!audible(r.lane)){ // hatch muted lanes: visible without colour
+      g2.save(); g2.beginPath(); g2.rect(0, r.y, W, r.h); g2.clip(); g2.strokeStyle = 'rgba(255,255,255,0.06)'; g2.lineWidth = 1;
+      for (let x = -r.h; x < W; x += 10){ g2.beginPath(); g2.moveTo(x, r.y + r.h); g2.lineTo(x + r.h, r.y); g2.stroke(); }
+      g2.restore();
+    }
+    if (S.L.locked.includes(r.lane)){ g2.fillStyle = 'rgba(0,0,0,0.18)'; g2.fillRect(0, r.y, W, r.h); }
+    g2.fillStyle = r.lane !== prevLane ? '#2e3664' : '#1d2345';
+    g2.fillRect(0, r.y, W, 1); prevLane = r.lane;
+  }
+  // column lines
+  for (let s = 0; s <= L.steps; s++){
+    const bar = s % (spb*4) === 0, beat = s % spb === 0;
+    g2.fillStyle = bar ? '#4a5590' : beat ? '#2e3664' : '#1a2042';
+    g2.fillRect(s*cw - (bar ? 1 : 0), R, bar ? 2 : 1, H - R);
+  }
+  // ruler
+  g2.fillStyle = '#121633'; g2.fillRect(0, 0, W, R);
+  g2.font = '600 11px ui-monospace,Menlo,Consolas,monospace'; g2.textBaseline = 'middle';
+  for (let s = 0; s < L.steps; s++){
+    const beatIn = Math.floor((s % (spb*4))/spb) + 1, bar = Math.floor(s/(spb*4)) + 1;
+    if (s % spb === 0){
+      g2.fillStyle = s % (spb*4) === 0 ? '#e9ecff' : '#9aa3c7';
+      const label = L.bars > 1 && s % (spb*4) === 0 ? `${bar}.${beatIn}` : `${beatIn}`;
+      g2.fillText(label, s*cw + 4, R/2);
+    } else if (cw >= 26 && s % spb === spb/2){ g2.fillStyle = '#5a6290'; g2.fillText('&', s*cw + 4, R/2); }
+  }
+  // target column flashes while listening
+  if (Seq.playing && S.playSource === 'target'){
+    for (const [s, t] of S.colFlash){ const k = 1 - (now - t)/260; if (k <= 0){ S.colFlash.delete(s); continue; }
+      g2.fillStyle = `rgba(255,255,255,${0.12*k})`; g2.fillRect(s*cw, R, cw, H-R); }
+  }
+  // hint-revealed target notes (dashed ghosts)
+  for (const k of S.revealed){
+    const n = L.targetNotes.find(t => key(t) === k); if (!n) continue;
+    const r = rowY(n.lane, LANES[n.lane].pitched ? n.pitch : 0); if (!r) continue;
+    g2.save(); g2.setLineDash([4,3]); g2.strokeStyle = hexA(LANES[n.lane].color, 0.9); g2.lineWidth = 1.5;
+    roundRect(n.step*cw + 3, r.y + 3, n.len*cw - 6, r.h - 6, 5); g2.stroke();
+    g2.fillStyle = hexA(LANES[n.lane].color, 0.9); g2.font = '700 12px system-ui'; g2.textAlign = 'center';
+    g2.fillText('?', n.step*cw + cw/2, r.y + r.h/2 + 1); g2.textAlign = 'left'; g2.restore();
+  }
+  // notes
+  const pinned = !KINDS[L.kind].canRemoveInitial;
+  for (const n of S.notes){
+    if (S.drag && S.drag.type === 'move' && S.drag.note === n && S.drag.moved) continue;
+    drawNote(n, {pinned: (pinned && S.initialKeys.has(key(n))) || L.locked.includes(n.lane), selected: S.selected === key(n)});
+  }
+  // drag previews
+  if (S.drag && S.drag.type === 'move' && S.drag.moved){
+    const d = S.drag, r = G.rows[d.cur.row], n = d.note;
+    const ghost = {...n, step:d.cur.step, pitch: LANES[n.lane].pitched && r.lane === n.lane ? r.pitch : n.pitch};
+    g2.globalAlpha = 0.7; drawNote(ghost, {selected:true}); g2.globalAlpha = 1;
+  }
+  if (S.drag && S.drag.type === 'resize'){
+    const d = S.drag, n = d.note, len = Math.max(1, d.cur.step - n.step + 1);
+    const r = rowY(n.lane, n.pitch); g2.strokeStyle = '#fff'; g2.setLineDash([4,3]); g2.lineWidth = 1.5;
+    roundRect(n.step*cw + 2, r.y + 2, len*cw - 4, r.h - 4, 5); g2.stroke(); g2.setLineDash([]);
+  }
+  // listening overlay
+  if (Seq.playing && S.playSource === 'target'){
+    g2.fillStyle = 'rgba(10,12,30,0.35)'; g2.fillRect(0, R, W, H-R);
+    g2.fillStyle = '#fff'; g2.font = '700 14px system-ui'; g2.fillText('🎧 Listening to the target…', 10, R + 16);
+  }
+  // playhead (interpolated from the audio clock)
+  if (Seq.playing && S.playStep >= 0){
+    const frac = Math.min(1, Math.max(0, (AudioEngine.now() - S.playStepTime)/S.playStepDur));
+    const x = (S.playStep + frac)*cw;
+    const col = S.playSource === 'target' ? '#ffffff' : '#4fe3e0';
+    g2.fillStyle = hexA(col === '#ffffff' ? '#ffffff' : '#4fe3e0', 0.08); g2.fillRect(S.playStep*cw, R, cw, H-R);
+    g2.save(); if (!rm){ g2.shadowColor = col; g2.shadowBlur = 10; }
+    g2.fillStyle = col; g2.fillRect(x - 1, 0, 2, H); g2.restore();
+  }
+  // particles
+  if (!rm){
+    for (let i = S.particles.length - 1; i >= 0; i--){
+      const p = S.particles[i];
+      p.x += p.vx; p.y += p.vy; p.vy += 0.04; p.life -= 0.025;
+      if (p.life <= 0){ S.particles.splice(i, 1); continue; }
+      g2.fillStyle = hexA(p.color, p.life); g2.fillRect(p.x, p.y, p.size, p.size);
+    }
+  } else S.particles.length = 0;
+  // keyboard cursor
+  if (S.showCursor && document.activeElement === canvas){
+    const r = G.rows[S.cursor.row];
+    if (r){ g2.strokeStyle = '#fff'; g2.lineWidth = 2; g2.setLineDash([5,3]);
+      g2.strokeRect(S.cursor.step*cw + 1.5, r.y + 1.5, cw - 3, r.h - 3); g2.setLineDash([]); }
+  }
+}
+let lastFrame = performance.now();
+function frame(){
+  const now = performance.now(), dt = Math.min(64, now - lastFrame); lastFrame = now;
+  if (S.screen === 'play' && S.L){
+    const t = AudioEngine.now();
+    while (Seq.queue.length && Seq.queue[0].time <= t) onStepVisual(Seq.queue.shift());
+    S.pulse *= Math.pow(0.9, dt/16);
+    drawGrid();
+    const bp = document.getElementById('bg-pulse');
+    bp.style.opacity = reducedMotion() ? 0 : (S.pulse*0.9).toFixed(3);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* =====================================================================
+   11. EDITING (permissions, budget, undo/redo) + INPUT (pointer, touch, keyboard)
+   ===================================================================== */
+const toolAllowed = t => S.L.tools.includes(t);
+const isInitial = n => S.initialKeys.has(key(n));
+function deny(msg){ UI.toast(msg, 'bad'); AudioEngine.jingle('bad'); UI.announce(msg); return false; }
+function countAdded(notes){ return notes.filter(n => !S.initialKeys.has(key(n))).length; }
+function commit(newNotes, info){
+  const L = S.L, B = L.budget;
+  if (B.moves != null && S.undo.length >= B.moves)
+    return deny('Out of moves! Undo one to get it back, or Reset to try again.');
+  if (B.adds != null && countAdded(newNotes) > B.adds)
+    return deny(`You can only add ${plural(B.adds,'note')} here. Remove one of yours to try another spot.`);
+  S.undo.push(S.notes); S.redo = []; S.notes = newNotes; S.edits++;
+  afterChange(info);
+  return true;
+}
+function laneEditable(lane){ return !S.L.locked.includes(lane); }
+function opToggle(lane, step, pitch){
+  const L = S.L, K = KINDS[L.kind];
+  if (!laneEditable(lane)) return deny(`${ln(lane)} is locked 🔒 in this level.`);
+  const hit = noteAtCell(S.notes, lane, step, pitch);
+  if (hit){
+    if (!K.canRemoveInitial && isInitial(hit)) return deny('That note came with the loop and stays (it has a dot). Add yours around it.');
+    return commit(S.notes.filter(n => n !== hit), {type:'remove', note:hit});
+  }
+  if (!K.canAdd) return deny('This level is about removing: tap a note to delete it.');
+  let nn = S.notes.slice();
+  if (LANES[lane].pitched){
+    const clash = nn.filter(n => n.lane === lane && n.step === step);
+    if (!K.canRemoveInitial && clash.some(isInitial)) return deny('That spot belongs to a note that came with the loop.');
+    nn = nn.filter(n => !(n.lane === lane && n.step === step))
+           .map(n => n.lane === lane && n.step < step && n.step + n.len > step ? {...n, len: step - n.step} : n);
+  }
+  const note = mkNote(lane, step, pitch);
+  nn.push(note);
+  if (commit(nn, {type:'add', note})){ AudioEngine.preview(note, Seq.stepDur()); return true; }
+  return false;
+}
+function opMove(note, step, pitch){
+  const L = S.L, K = KINDS[L.kind];
+  if (!toolAllowed('move')) return false;
+  if (!laneEditable(note.lane)) return deny(`${ln(note.lane)} is locked 🔒 in this level.`);
+  if (!K.canAdd || (!K.canRemoveInitial && isInitial(note))) return deny('That note can\'t move in this level.');
+  if (step < 0 || step >= L.steps) return false;
+  if (!LANES[note.lane].pitched) pitch = 0;
+  if (step === note.step && pitch === note.pitch) return false;
+  if (S.notes.some(n => n !== note && n.lane === note.lane && n.step === step)) return deny('That spot is taken.');
+  let next = S.notes.filter(n => n !== note).map(n =>
+    n.lane === note.lane && n.step < step && n.step + n.len > step ? {...n, len: step - n.step} : n);
+  const nextOnset = next.filter(n => n.lane === note.lane && n.step > step).reduce((m, n) => Math.min(m, n.step), L.steps);
+  const moved = {...note, step, pitch, len: Math.max(1, Math.min(note.len, nextOnset - step))};
+  next.push(moved);
+  if (commit(next, {type:'move', note:moved})){ S.selected = null; AudioEngine.preview(moved, Seq.stepDur()); return true; }
+  return false;
+}
+function maxLenFor(note){
+  return S.notes.filter(n => n !== note && n.lane === note.lane && n.step > note.step).reduce((m, n) => Math.min(m, n.step), S.L.steps) - note.step;
+}
+function opResize(note, len){
+  if (!toolAllowed('resize') || !LANES[note.lane].pitched) return deny('Only bass and lead notes can be held longer.');
+  if (!laneEditable(note.lane)) return deny(`${ln(note.lane)} is locked 🔒 in this level.`);
+  len = Math.max(1, Math.min(maxLenFor(note), len));
+  if (len === note.len) return false;
+  const r = {...note, len};
+  return commit(S.notes.map(n => n === note ? r : n), {type:'resize', note:r});
+}
+function opVelocity(note){
+  if (!toolAllowed('velocity')) return false;
+  if (!laneEditable(note.lane)) return deny(`${ln(note.lane)} is locked 🔒 in this level.`);
+  if (!KINDS[S.L.kind].canAdd) return deny('In this level you can only remove notes.');
+  const r = {...note, vel: note.vel === 2 ? 3 : note.vel === 3 ? 1 : 2};
+  if (commit(S.notes.map(n => n === note ? r : n), {type:'vel', note:r})){ AudioEngine.preview(r, Seq.stepDur()); return true; }
+  return false;
+}
+function undo(){ if (!S.undo.length) return; S.redo.push(S.notes); S.notes = S.undo.pop(); S.selected = null; afterChange({type:'undo'}); }
+function redo(){ if (!S.redo.length) return; S.undo.push(S.notes); S.notes = S.redo.pop(); S.selected = null; afterChange({type:'redo'}); }
+
+function describeNote(n){
+  const L = S.L;
+  return `${ln(n.lane)}${LANES[n.lane].pitched ? ' ' + pitchName(n.lane, n.pitch) : ''} on ${stepLabel(n.step, L)} (step ${n.step+1})` +
+    (n.vel !== 2 ? `, ${VEL[n.vel].name}` : '') + (n.len > 1 ? `, ${n.len} steps long` : '');
+}
+function afterChange(info){
+  evaluate();
+  if (S.L.kind === 'sandbox') saveSandbox();
+  let msg = '';
+  if (info){
+    if (info.type === 'add') msg = `Added ${describeNote(info.note)}.`;
+    else if (info.type === 'remove') msg = `Removed ${describeNote(info.note)}.`;
+    else if (info.type === 'move') msg = `Moved to ${describeNote(info.note)}.`;
+    else if (info.type === 'resize') msg = `Now ${describeNote(info.note)}.`;
+    else if (info.type === 'vel') msg = `${describeNote(info.note)}: ${VEL[info.note.vel].name}.`;
+    else if (info.type === 'undo') msg = 'Undone.';
+    else if (info.type === 'redo') msg = 'Redone.';
+  }
+  if (S.evalRes && S.L.kind !== 'sandbox') msg += ` ${S.evalRes.reqDone} of ${S.evalRes.reqTotal} goals met.`;
+  UI.announce(msg);
+}
+
+// ---- pointer input ----
+function cellFromEvent(e){
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
+  if (y < G.ruler) return null;
+  const step = Math.floor(x / G.cw);
+  const row = G.rows.findIndex(r => y >= r.y && y < r.y + r.h);
+  if (row < 0 || step < 0 || step >= S.L.steps) return null;
+  return {row, step};
+}
+function updateTouchAction(){ canvas.style.touchAction = (S.tool === 'move' || S.tool === 'resize') ? 'none' : 'pan-x pan-y'; }
+canvas.addEventListener('pointerdown', e => {
+  if (e.button !== undefined && e.button > 0) return;
+  AudioEngine.ensure();
+  const c = cellFromEvent(e); if (!c) return;
+  S.showCursor = false; S.cursor = {row:c.row, step:c.step};
+  const r = G.rows[c.row], note = noteAtCell(S.notes, r.lane, c.step, r.pitch);
+  if (S.tool === 'move' && note){ S.drag = {type:'move', note, start:c, cur:c, moved:false}; canvas.setPointerCapture(e.pointerId); }
+  else if (S.tool === 'resize' && note && LANES[r.lane].pitched){ S.drag = {type:'resize', note, start:c, cur:c, moved:false}; canvas.setPointerCapture(e.pointerId); }
+  else S.drag = {type:'tap', cell:c};
+});
+canvas.addEventListener('pointermove', e => {
+  const d = S.drag; if (!d || d.type === 'tap') return;
+  const c = cellFromEvent(e); if (!c) return;
+  if (d.type === 'move'){
+    const r = G.rows[c.row];
+    if (r.lane !== d.note.lane) c.row = G.rows.findIndex(x => x.lane === d.note.lane && x.pitch === (LANES[d.note.lane].pitched ? d.note.pitch : 0));
+  }
+  if (c.row !== d.cur.row || c.step !== d.cur.step){ d.cur = c; d.moved = true; }
+});
+canvas.addEventListener('pointerup', e => {
+  const d = S.drag; S.drag = null; if (!d) return;
+  if (d.type === 'tap'){ handleTap(d.cell); return; }
+  if (d.type === 'move'){
+    if (d.moved){ const r = G.rows[d.cur.row]; opMove(d.note, d.cur.step, r.pitch); }
+    else { S.selected = S.selected === key(d.note) ? null : key(d.note); if (S.selected) UI.toast('Picked up. Now tap where it should go.'); }
+  }
+  if (d.type === 'resize'){
+    if (d.moved) opResize(d.note, d.cur.step - d.note.step + 1);
+    else { const max = maxLenFor(d.note); opResize(d.note, d.note.len >= max ? 1 : d.note.len + 1); }
+  }
+});
+canvas.addEventListener('pointercancel', () => { S.drag = null; });
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+function handleTap(c){
+  const r = G.rows[c.row], note = noteAtCell(S.notes, r.lane, c.step, r.pitch);
+  if (S.tool === 'move'){
+    if (S.selected){
+      const sel = S.notes.find(n => key(n) === S.selected);
+      if (sel && r.lane === sel.lane && !note){ opMove(sel, c.step, r.pitch); return; }
+      S.selected = null;
+    }
+    if (!note) UI.toast('Move tool: drag a note, or tap a note and then tap an empty spot in the same lane.');
+    return;
+  }
+  if (S.tool === 'velocity' && note){ opVelocity(note); return; }
+  if (S.tool === 'resize' && note){ const max = maxLenFor(note); opResize(note, note.len >= max ? 1 : note.len + 1); return; }
+  opToggle(r.lane, c.step, r.pitch);
+}
+
+// ---- keyboard ----
+canvas.addEventListener('focus', () => { S.showCursor = true; });
+canvas.addEventListener('keydown', e => {
+  if (!S.L) return;
+  const cur = S.cursor, rows = G.rows, r = rows[cur.row];
+  const note = r ? noteAtCell(S.notes, r.lane, cur.step, r.pitch) : null;
+  let handled = true; S.showCursor = true;
+  switch (e.key){
+    case 'ArrowLeft': case 'ArrowRight': {
+      const d = e.key === 'ArrowLeft' ? -1 : 1;
+      if (e.shiftKey && note && toolAllowed('move')){ if (opMove(note, note.step + d, note.pitch)) cur.step = note.step + d; }
+      else cur.step = (cur.step + d + S.L.steps) % S.L.steps;
+      UI.announceCell(); break; }
+    case 'ArrowUp': case 'ArrowDown': {
+      const d = e.key === 'ArrowUp' ? -1 : 1;
+      if (e.shiftKey && note && toolAllowed('move') && LANES[note.lane].pitched){
+        const np = note.pitch - d; if (np >= 0 && np < LANES[note.lane].midi.length && opMove(note, note.step, np)) cur.row += d;
+      } else cur.row = Math.max(0, Math.min(rows.length - 1, cur.row + d));
+      UI.announceCell(); break; }
+    case 'Enter': case ' ': AudioEngine.ensure(); handleTap({row:cur.row, step:cur.step}); break;
+    case 'Delete': case 'Backspace': if (note) opToggle(r.lane, note.step, note.pitch); break;
+    case '[': if (note && toolAllowed('resize')) opResize(note, note.len - 1); break;
+    case ']': if (note && toolAllowed('resize')) opResize(note, note.len + 1); break;
+    case 'v': case 'V': if (note) opVelocity(note); break;
+    default: handled = false;
+  }
+  if (handled){ e.preventDefault(); e.stopPropagation(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  if (e.key === 'Escape'){ if (!document.getElementById('modal').hidden) UI.closeModal(); S.selected = null; return; }
+  if (S.screen !== 'play' || !document.getElementById('modal').hidden) return;
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && (e.key === 'z' || e.key === 'Z')){ e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if (mod && (e.key === 'y' || e.key === 'Y')){ e.preventDefault(); redo(); return; }
+  if (mod || e.altKey) return;
+  if (e.key === 'p' || e.key === 'P'){ UI.togglePlay(); return; }
+  if ((e.key === 't' || e.key === 'T') && S.L.targetNotes){ UI.hearTarget(); return; }
+  const tool = Object.keys(TOOLS).find(t => TOOLS[t].key === e.key);
+  if (tool && toolAllowed(tool)) UI.setTool(tool);
+});
+// first gesture anywhere unlocks audio
+['pointerdown','keydown'].forEach(ev => document.addEventListener(ev, () => AudioEngine.ensure(), {once:true, capture:true}));
+
+/* =====================================================================
+   12. UI (screens, panels, level flow)
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function unlockedSet(){
+  const u = new Set();
+  LEVELS.forEach(L => { if ((S.save.stars[L.id]||0) >= 1) L.unlocks.forEach(x => u.add(x)); });
+  if (S.unlockAll) LEVELS.forEach(L => L.unlocks.forEach(x => u.add(x)));
+  return u;
+}
+const levelUnlocked = i => S.unlockAll || i === 0 || (S.save.stars[LEVELS[i-1].id]||0) >= 1;
+function evaluate(){
+  const L = S.L;
+  const editable = l => laneEditable(l);
+  S.grooveRes = grooveScore(L, S.notes, editable);
+  if (L.kind === 'sandbox'){ S.evalRes = null; UI.panels(); return; }
+  const snap = S.lastCheck && S.lastCheck.notesRef === S.notes ? S.lastCheck.text :
+               S.lastCheck ? `last check: ${S.lastCheck.text} (you've changed things since)` : null;
+  S.evalRes = evaluateNotes(L, S.notes, {checkSnapshot:snap});
+  const st = starsFor(L, S.evalRes, S.grooveRes, S);
+  const prevStars = S.stars; S.stars = st.stars; S.starInfo = st;
+  if (S.evalRes.requiredPass && !S.wasPassing){
+    S.wasPassing = true;
+    AudioEngine.jingle('win');
+    UI.toast('All goals met! Press Finish, or keep going for more stars.', 'good');
+    celebrate();
+  } else if (!S.evalRes.requiredPass) S.wasPassing = false;
+  else if (S.stars > prevStars) AudioEngine.jingle('star');
+  if (S.stars > (S.save.stars[L.id]||0)){ S.save.stars[L.id] = S.stars; Store.save(); }
+  UI.panels();
+}
+function celebrate(){
+  if (reducedMotion()) return;
+  for (let i = 0; i < 70; i++) spawnParticles(Math.random()*G.w, G.ruler + Math.random()*(G.h - G.ruler),
+    ['#ff5d73','#ffb347','#4fe3e0','#8c6cff','#5dff9a'][i % 5], 1, 3);
+}
+function saveSandbox(){ const L = S.L; S.save.sandbox = {notes:S.notes, bpm:L.bpm, swing:L.swing, steps:L.steps}; Store.save(); }
+
+function buildSandboxLevel(){
+  const u = unlockedSet(), sb = S.save.sandbox || {};
+  const lanes = LANE_ORDER.filter(l => l === 'kick' || u.has('lane:'+l));
+  const tools = ['draw', ...['move','resize','velocity'].filter(t => u.has('tool:'+t))];
+  const steps = sb.steps === 32 ? 32 : 16;
+  return normaliseLevel({ id:'sandbox', title:'Sandbox', kind:'sandbox', bpm: sb.bpm || 100, swing: u.has('swing') ? (sb.swing || 0) : 0,
+    steps, stepsPerBeat:4, lanes, intro:'', initial:{}, rules:[], budget:{}, star3:{}, tools, hint:'Anything goes. Watch the groove score and try the tip.', unlocks:[] }, -1);
+}
+
+const UI = {
+  show(screen){
+    S.screen = screen;
+    for (const s of ['title','levels','play']) $('screen-'+s).hidden = s !== screen;
+    if (screen !== 'play' && Seq.playing) Seq.stop();
+    $('toast').className = 'toast';
+    $('bg-pulse').style.opacity = 0;
+    const sbOk = S.unlockAll || unlockedSet().has('sandbox');
+    $('nav-sandbox').disabled = !sbOk;
+    $('nav-sandbox').title = sbOk ? 'Free play' : 'Unlocks after level 5';
+    $('nav-sandbox').textContent = sbOk ? 'Sandbox' : '🔒 Sandbox';
+    window.scrollTo(0, 0);
+  },
+  titleGrid(){
+    const tg = $('title-grid'); const on = new Set([0,4,8,12, 20,28, 34,38,42,46, 49,51,53,55, 57,59,61,63]);
+    tg.innerHTML = '';
+    for (let i = 0; i < 64; i++){
+      const c = document.createElement('i');
+      if (on.has(i)){ c.className = 'on'; c.style.background = ['#ff5d73','#ffb347','#4fe3e0','#8c6cff'][Math.floor(i/16)]; c.style.animationDelay = ((i % 16)*0.15) + 's'; }
+      tg.appendChild(c);
+    }
+  },
+  levels(){
+    const grid = $('level-grid'); grid.innerHTML = '';
+    const u = unlockedSet(), total = LEVELS.reduce((a, L) => a + (S.save.stars[L.id]||0), 0);
+    $('levels-summary').textContent = `${total} of ${LEVELS.length*3} stars`;
+    const sb = document.createElement('button'); sb.className = 'lvl-card sandbox' + (u.has('sandbox') || S.unlockAll ? '' : ' locked');
+    sb.innerHTML = `<span class="n">FREE PLAY</span><span class="t">Sandbox</span><span class="k">Every lane and tool you've unlocked</span>
+      <span class="s">${u.has('sandbox') || S.unlockAll ? '▶ Open' : '🔒 Clear level 5'}</span>`;
+    sb.disabled = !(u.has('sandbox') || S.unlockAll); sb.onclick = () => openSandbox();
+    grid.appendChild(sb);
+    LEVELS.forEach((L, i) => {
+      const b = document.createElement('button'), st = S.save.stars[L.id]||0, open = levelUnlocked(i);
+      const v = S.verify[i];
+      b.className = 'lvl-card' + (open ? '' : ' locked');
+      b.disabled = !open;
+      b.setAttribute('aria-label', `Level ${i+1}, ${L.title}, ${KINDS[L.kind].label}. ${open ? `${st} of 3 stars` : 'Locked'}`);
+      b.innerHTML = `<span class="n">LEVEL ${String(i+1).padStart(2,'0')}</span><span class="t">${esc(L.title)}</span>
+        <span class="k">${KINDS[L.kind].label} · ${L.bpm} BPM</span>
+        <span class="s">${open ? '★'.repeat(st) + '☆'.repeat(3-st) : '🔒 Clear level ' + i}</span>
+        ${v && !v.ok ? '<span class="warn" title="This level failed its solvability check">⚠</span>' : ''}`;
+      b.onclick = () => openLevel(i);
+      grid.appendChild(b);
+    });
+  },
+  laneHeads(){
+    const L = S.L, wrap = $('lane-heads'); wrap.innerHTML = '';
+    const sp = document.createElement('div'); sp.style.height = G.ruler + 'px'; sp.style.borderBottom = '1px solid var(--line)'; wrap.appendChild(sp);
+    for (const lane of L.lanes){
+      const lp = LANES[lane], rows = G.rows.filter(r => r.lane === lane), h = rows.reduce((a, r) => a + r.h, 0);
+      const d = document.createElement('div');
+      d.className = 'lane-head' + (lp.pitched ? ' pitched' : '') + (audible(lane) ? '' : ' muted');
+      d.style.height = h + 'px';
+      const locked = L.locked.includes(lane);
+      d.innerHTML = `<button class="nm" title="${esc(lp.desc)} (click to hear it)"><span class="sw" style="background:${lp.color}"></span>${esc(lp.name)}${locked ? ' 🔒' : ''}</button>
+        <div class="ms"><button aria-pressed="${S.mute.has(lane)}" aria-label="Mute ${esc(lp.name)}" title="Mute">M</button><button aria-pressed="${S.solo.has(lane)}" aria-label="Solo ${esc(lp.name)}" title="Solo: hear only this lane">S</button></div>
+        <span class="tag">${S.mute.has(lane) ? 'muted' : S.solo.has(lane) ? 'solo' : !audible(lane) ? 'silent (solo)' : ''}</span>`;
+      if (lp.pitched){
+        rows.forEach(r => { const s = document.createElement('span'); s.className = 'rowlbl';
+          s.style.top = (r.y - rows[0].y + r.h/2 - 5) + 'px';
+          const m = lp.midi[r.pitch]; s.textContent = NOTE_NAMES[m % 12] + (m % 12 === 0 ? '⌂' : ''); d.appendChild(s); });
+      }
+      const [nm, msWrap] = [d.querySelector('.nm'), d.querySelector('.ms')];
+      nm.onclick = () => AudioEngine.preview(mkNote(lane, 0, 0), Seq.stepDur());
+      msWrap.children[0].onclick = () => { S.mute.has(lane) ? S.mute.delete(lane) : S.mute.add(lane); UI.laneHeads(); };
+      msWrap.children[1].onclick = () => { S.solo.has(lane) ? S.solo.delete(lane) : S.solo.add(lane); UI.laneHeads(); };
+      wrap.appendChild(d);
+    }
+  },
+  tools(){
+    const t = $('tools'); t.innerHTML = '';
+    const list = S.L.tools;
+    if (list.length < 2){ t.hidden = true; return; }
+    t.hidden = false;
+    for (const id of list){
+      const b = document.createElement('button');
+      b.textContent = TOOLS[id].label; b.setAttribute('role','radio'); b.setAttribute('aria-checked', S.tool === id);
+      b.setAttribute('aria-pressed', S.tool === id); b.title = `${TOOLS[id].help} (key ${TOOLS[id].key})`;
+      b.onclick = () => UI.setTool(id);
+      t.appendChild(b);
+    }
+  },
+  setTool(id){ S.tool = id; S.selected = null; updateTouchAction(); UI.tools(); UI.help(); UI.toast(TOOLS[id].help); },
+  help(){
+    $('grid-help').textContent = `${TOOLS[S.tool].help} Keyboard: arrows move, Enter adds/removes, P plays` +
+      (toolAllowed('move') ? ', Shift+arrows nudge' : '') + (toolAllowed('resize') ? ', [ ] length' : '') +
+      (toolAllowed('velocity') ? ', V loudness' : '') + ', Ctrl+Z undo.' +
+      (!KINDS[S.L.kind].canRemoveInitial ? ' Notes with a dot came with the loop and stay.' : '');
+  },
+  transport(){
+    if (!S.L) return;
+    const b = $('btn-play');
+    b.textContent = Seq.playing ? '■ Stop' : '▶ Play'; b.classList.toggle('playing', Seq.playing); b.setAttribute('aria-pressed', Seq.playing);
+    const L = S.L, ghost = !!L.targetNotes;
+    $('btn-target').hidden = !ghost; $('btn-check').hidden = !ghost; $('btn-reveal').hidden = !ghost;
+    if (ghost){
+      const lim = L.budget.listens, left = lim ? lim - S.listens : Infinity;
+      const tb = $('btn-target');
+      if (Seq.playing && Seq.source === 'target'){ tb.textContent = '⏹ Back to mine'; tb.disabled = false; }
+      else { tb.textContent = lim ? `🎧 Hear target (${left} left)` : '🎧 Hear target'; tb.disabled = left <= 0; }
+      const hl = L.budget.hints != null ? L.budget.hints - S.hints : Infinity;
+      $('btn-reveal').disabled = hl <= 0;
+      $('btn-reveal').textContent = L.budget.hints != null ? `Reveal a note (${hl} left)` : 'Reveal a note';
+    }
+    $('btn-undo').disabled = !S.undo.length; $('btn-redo').disabled = !S.redo.length;
+  },
+  panels(){
+    const L = S.L, sandbox = L.kind === 'sandbox';
+    $('rules-card').hidden = sandbox; $('stars-wrap').hidden = sandbox; $('btn-finish').hidden = sandbox;
+    $('score-title').textContent = sandbox ? 'Groove' : 'Score';
+    if (!sandbox){
+      const ul = $('rules'), ev = S.evalRes;
+      if (ul.children.length !== ev.res.length) UI.rulesList();
+      ev.res.forEach((x, i) => {
+        const li = ul.children[i], was = li.classList.contains('pass');
+        li.classList.toggle('pass', x.pass);
+        li.querySelector('.ic').textContent = x.pass ? '✓' : '';
+        li.querySelector('.st').textContent = x.pass ? 'done' : 'not yet';
+        li.querySelector('.det').textContent = x.detail;
+        if (x.pass && !was && S.ready){ li.classList.remove('pop'); void li.offsetWidth; li.classList.add('pop'); UI.announce(`Goal done: ${x.text}.`); }
+      });
+      const st = S.starInfo;
+      $('stars').textContent = '★'.repeat(st.stars) + '☆'.repeat(3 - st.stars);
+      $('stars-lbl').textContent = st.stars ? `${st.stars} of 3 stars right now` : 'No stars yet: meet all the goals for ★';
+      $('crit').innerHTML = st.crit.map((c, i) => `<li class="${c.ok ? 'ok' : 'no'}" data-mark="${c.ok ? '✓' : '○'}">${'★'.repeat(i+1)} ${esc(c.text)}</li>`).join('');
+      const fin = $('btn-finish');
+      fin.disabled = !ev.requiredPass;
+      fin.textContent = ev.requiredPass ? `Finish level ${'★'.repeat(st.stars)}` : `Finish (${ev.reqDone}/${ev.reqTotal} goals)`;
+    }
+    const gr = S.grooveRes;
+    $('groove-total').textContent = gr.total;
+    $('parts').innerHTML = gr.parts.map(p => `<div class="part${p.applicable ? '' : ' na'}"><div class="row"><span>${esc(p.name)}</span>
+      <span>${p.applicable ? Math.round(p.score) + '/20' : 'n/a'}</span></div><div class="bar"><i style="width:${p.applicable ? p.score*5 : 0}%"></i></div>
+      <div class="why">${esc(p.why)}</div></div>`).join('');
+    $('tip').innerHTML = `<b>Tip:</b> ${esc(gr.tip)}`;
+    UI.budget(); UI.transport();
+  },
+  rulesList(){
+    $('rules').innerHTML = S.evalRes.res.map(x => `<li><span class="ic" aria-hidden="true"></span><span class="tx">
+      ${x.rule.optional ? '<span class="opt">Bonus</span>' : ''}${esc(x.text)}<span class="st"></span>
+      ${x.why ? `<span class="why">${esc(x.why)}</span>` : ''}<span class="det"></span></span></li>`).join('');
+  },
+  budget(){
+    const L = S.L, B = L.budget, el = $('budget'); const chips = [];
+    if (L.kind === 'sandbox'){ el.innerHTML = ''; return; }
+    if (B.moves != null){ const left = B.moves - S.undo.length;
+      chips.push(`<span class="chip ${left <= 1 ? 'warn' : ''}">Moves left: <b>${left}</b> of ${B.moves}</span>`); }
+    if (B.adds != null){ const left = B.adds - countAdded(S.notes);
+      chips.push(`<span class="chip ${left === 0 ? 'warn' : ''}">Notes left to add: <b>${left}</b> of ${B.adds}</span>`); }
+    if (L.star3.maxMoves != null) chips.push(`<span class="chip">Edits: <b>${S.edits}</b> (par ${L.star3.maxMoves} for ★★★)</span>`);
+    if (L.targetNotes){
+      chips.push(`<span class="chip">Checks: <b>${S.checks}</b>${L.star3.maxChecks != null ? ` (≤${L.star3.maxChecks} for ★★★)` : ''}</span>`);
+      if (S.hints) chips.push(`<span class="chip warn">Notes revealed: ${S.hints}</span>`);
+    }
+    let html = chips.join('');
+    if (B.moves != null && S.undo.length >= B.moves && !S.evalRes.requiredPass)
+      html += `<div class="fail-banner" role="alert"><b>Out of moves.</b> Undo a move to get it back, or start over.
+        <button onclick="undo()">↶ Undo</button><button onclick="resetLevel()">Retry level</button></div>`;
+    el.innerHTML = html;
+  },
+  togglePlay(){ AudioEngine.ensure(); Seq.playing ? Seq.stop() : Seq.start(); },
+  hearTarget(){
+    const L = S.L; if (!L.targetNotes) return;
+    if (Seq.playing && Seq.source === 'target'){ Seq.source = 'player'; UI.transport(); return; }
+    const lim = L.budget.listens;
+    if (lim && S.listens >= lim) return deny('No listens left. The target stays hidden now. Trust your ears, or reveal a note.');
+    S.listens++; Seq.source = 'target'; Seq.targetLoops = TARGET_LOOPS;
+    if (!Seq.playing) Seq.start(); else Seq.restartAtTop();
+    UI.transport();
+    UI.announce(`Playing the target twice, then your beat.${lim ? ` ${lim - S.listens} listens left.` : ''}`);
+  },
+  check(){
+    const L = S.L, rule = L.rules.find(r => r.type === 'matchTarget');
+    S.checks++;
+    const text = compareToTarget(L, S.notes, rule && rule.lanes);
+    S.lastCheck = {text, notesRef:S.notes};
+    evaluate();
+    UI.toast(`Check: ${text}`); UI.announce(`Check: ${text}`);
+  },
+  reveal(){
+    const L = S.L, rule = L.rules.find(r => r.type === 'matchTarget'), lanes = (rule && rule.lanes) || L.lanes;
+    if (L.budget.hints != null && S.hints >= L.budget.hints) return;
+    const have = new Set(S.notes.map(key));
+    const cand = L.targetNotes.filter(n => lanes.includes(n.lane) && !have.has(key(n)) && !S.revealed.has(key(n)));
+    if (!cand.length){ UI.toast('Every target note is already in place or revealed. Remove the extras!'); return; }
+    const n = cand[0]; S.revealed.add(key(n)); S.hints++;
+    UI.toast(`Revealed: ${describeNote(n)}. It's the dashed "?" box.`); evaluate();
+  },
+  showHint(){ UI.toast('💡 ' + S.L.hint, '', 7000); UI.announce(S.L.hint); },
+  toast(msg, kind, ms){
+    const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (kind ? ' ' + kind : '');
+    clearTimeout(UI._tt); UI._tt = setTimeout(() => { t.className = 'toast'; }, ms || 3200);
+  },
+  announce(msg){ const el = $('sr-live'); el.textContent = ''; setTimeout(() => { el.textContent = msg; }, 30); },
+  announceCell(){
+    const r = G.rows[S.cursor.row], L = S.L; if (!r) return;
+    const n = noteAtCell(S.notes, r.lane, S.cursor.step, r.pitch);
+    UI.announce(`${ln(r.lane)}${LANES[r.lane].pitched ? ' ' + pitchName(r.lane, r.pitch) : ''}, ${stepLabel(S.cursor.step, L)} (step ${S.cursor.step+1}): ${n ? (VEL[n.vel].name + ' note') : 'empty'}.`);
+  },
+  modal(html){ $('dialog').innerHTML = html; $('modal').hidden = false; const f = $('dialog').querySelector('button'); if (f) f.focus(); },
+  closeModal(){ $('modal').hidden = true; if (S.screen === 'play') canvas.focus({preventScroll:true}); },
+  results(){
+    const L = S.L, st = S.starInfo, gr = S.grooveRes, i = L.index;
+    const best = S.save.stars[L.id] || 0;
+    const first = !S.clearedBefore;
+    const unl = first && L.unlocks.length ? `<div class="unl">🔓 <b>Unlocked:</b> ${L.unlocks.map(u => esc(UNLOCK_TEXT[u]||u)).join(' · ')}</div>` : '';
+    const next = i + 1 < LEVELS.length;
+    UI.modal(`<h2 id="modal-title">${st.stars === 3 ? 'Perfect groove!' : 'Level clear!'}</h2>
+      <div class="stars" aria-label="${st.stars} of 3 stars">${'★'.repeat(st.stars)}${'☆'.repeat(3-st.stars)}</div>
+      <p style="color:var(--dim);margin:0 0 6px">Your best: ${best} of 3 stars.</p>
+      <ul class="crit">${st.crit.map((c, k) => `<li class="${c.ok ? 'ok' : 'no'}" data-mark="${c.ok ? '✓' : '○'}">${'★'.repeat(k+1)} ${esc(c.text)}</li>`).join('')}</ul>
+      <div class="groove-total"><b>${gr.total}</b><span>/100 groove quality</span></div>
+      <div class="parts">${gr.parts.filter(p => p.applicable).map(p => `<div class="part"><div class="row"><span>${esc(p.name)}</span><span>${Math.round(p.score)}/20</span></div>
+        <div class="bar"><i style="width:${p.score*5}%"></i></div><div class="why">${esc(p.why)}</div></div>`).join('')}</div>
+      <div class="tip"><b>Tip:</b> ${esc(gr.tip)}</div>${unl}
+      <div class="actions">
+        ${next ? `<button class="btn-primary" id="m-next">Next level →</button>` : `<button class="btn-primary" id="m-levels">All done! Levels</button>`}
+        <button id="m-keep">Keep tweaking</button><button id="m-retry">Retry</button>${next ? '<button id="m-levels">Levels</button>' : ''}
+      </div>`);
+    if ($('m-next')) $('m-next').onclick = () => { UI.closeModal(); openLevel(i + 1); };
+    $('m-keep').onclick = () => UI.closeModal();
+    $('m-retry').onclick = () => { UI.closeModal(); resetLevel(true); };
+    $('m-levels').onclick = () => { UI.closeModal(); goLevels(); };
+    S.clearedBefore = true;
+  },
+  glossary(){
+    UI.modal(`<h2 id="modal-title">How to play</h2>
+      <p>Each level is a small beat puzzle. The <b>Goals</b> panel lists what to do. Each goal turns green with a ✓ the moment it's met. Meet every goal, then press <b>Finish</b>.
+      Columns are time (left to right). Rows are sounds.</p>
+      <dl>
+        <dt>Beat</dt><dd>One count of "1, 2, 3, 4". Thick lines mark beats. 4 beats make a bar.</dd>
+        <dt>Step</dt><dd>One column. Most levels have 4 steps per beat.</dd>
+        <dt>The "and"</dt><dd>The step exactly halfway between two beats ("1 and 2 and…").</dd>
+        <dt>"e" and "a"</dt><dd>The quick in-between steps: "1 e and a 2 e and a…".</dd>
+        <dt>Backbeat</dt><dd>Snare or clap on beats 2 and 4: the snap that makes heads nod.</dd>
+        <dt>Swing</dt><dd>Every second step plays a little late, for a bouncy feel.</dd>
+        <dt>Velocity</dt><dd>How hard a note hits: soft (short, dashed outline), medium, loud (tall, white top line).</dd>
+        <dt>Flam</dt><dd>Two hits side by side. Usually sounds like a stumble.</dd>
+        <dt>Syncopation</dt><dd>Hits between the beats. Adds bounce.</dd>
+        <dt>Kick/bass lock</dt><dd>Bass notes that start with a kick hit as one punch.</dd>
+        <dt>Fill</dt><dd>A short burst at the end of a loop that leads back to the start.</dd>
+        <dt>Home note ⌂</dt><dd>The bottom row of bass/lead (C). Every row is in key.</dd>
+        <dt>M / S</dt><dd>Mute a lane / Solo it (hear only that lane).</dd>
+      </dl>
+      <p><b>Keyboard:</b> click the grid (or Tab to it), then arrows move the dashed cursor, Enter/Space adds or removes, Delete removes,
+      P plays/stops, T hears the target, 1-4 pick tools, Shift+arrows nudge a note, [ ] change length, V changes loudness, Ctrl+Z / Ctrl+Shift+Z undo/redo.</p>
+      <p><b>Groove quality</b> (0-100) adds up five scores: timing, variety, use of space, backbeat and clean hits. Each one shows why it scored what it did.</p>
+      <div class="actions"><button class="btn-primary" id="m-close">Got it</button></div>`);
+    $('m-close').onclick = () => UI.closeModal();
+  },
+};
+
+function loadLevelState(L){
+  Seq.stop();
+  S.L = L; S.notes = cloneNotes(L.initialNotes); S.undo = []; S.redo = []; S.edits = 0;
+  S.hints = 0; S.checks = 0; S.listens = 0; S.revealed = new Set(); S.lastCheck = null; S.selected = null;
+  S.initialKeys = new Set(L.initialNotes.map(key)); S.mute.clear(); S.solo.clear();
+  S.tool = 'draw'; S.cursor = {row:0, step:0}; S.wasPassing = false; S.stars = 0; S.particles = []; S.flash.clear();
+  S.clearedBefore = (S.save.stars[L.id]||0) >= 1; S.ready = false;
+}
+function renderPlayScreen(){
+  const L = S.L, sandbox = L.kind === 'sandbox';
+  $('lvl-num').textContent = sandbox ? 'FREE PLAY' : `LEVEL ${String(L.index+1).padStart(2,'0')}`;
+  $('lvl-name').textContent = L.title;
+  $('lvl-kind').textContent = KINDS[L.kind].label;
+  $('lvl-kind').title = KINDS[L.kind].blurb;
+  $('lvl-bpm').textContent = `${L.bpm} BPM`;
+  $('lvl-bpm').title = 'Tempo: beats per minute';
+  $('lvl-swing').textContent = L.swing ? `swing ${Math.round(L.swing*100)}%` : 'straight';
+  $('lvl-swing').title = 'Swing makes every second step play a little late';
+  $('lvl-steps').textContent = `${L.steps} steps · ${L.bars} bar${L.bars > 1 ? 's' : ''}`;
+  $('lvl-intro').hidden = sandbox;
+  $('lvl-intro').innerHTML = sandbox ? '' : `<b>${esc(KINDS[L.kind].label)}:</b> ${L.intro}`;
+  $('sandbox-bar').hidden = !sandbox;
+  $('btn-hint').hidden = sandbox;
+  if (sandbox){
+    const u = unlockedSet();
+    $('sb-bpm').value = L.bpm; $('sb-bpm-v').textContent = L.bpm;
+    $('sb-swing-wrap').hidden = !u.has('swing'); $('sb-swing').value = L.swing; $('sb-swing-v').textContent = Math.round(L.swing*100) + '%';
+    $('sb-steps').value = String(L.steps);
+  }
+  $('rules').innerHTML = '';
+  $('toast').className = 'toast';
+  UI.show('play');
+  layoutGrid(); UI.tools(); UI.help(); updateTouchAction();
+  evaluate(); S.ready = true;
+}
+function openLevel(i){
+  if (!levelUnlocked(i)) return;
+  loadLevelState(LEVELS[i]); S.idx = i;
+  renderPlayScreen();
+  if (S.autoplay !== false && AudioEngine.ready) Seq.start();
+  canvas.focus({preventScroll:true}); S.showCursor = false;
+}
+function openSandbox(){
+  if (!(S.unlockAll || unlockedSet().has('sandbox'))) return;
+  const L = buildSandboxLevel();
+  loadLevelState(L);
+  const sb = S.save.sandbox;
+  if (sb && sb.notes) S.notes = sb.notes.filter(n => L.lanes.includes(n.lane) && n.step < L.steps);
+  renderPlayScreen();
+}
+function resetLevel(force){
+  if (!S.L) return;
+  if (!force && S.undo.length && !confirmSafe('Start this level over? Your changes will be cleared.')) return;
+  const keep = {hints:S.hints, checks:S.checks, listens:S.listens, revealed:S.revealed};
+  S.notes = cloneNotes(S.L.initialNotes); S.undo = []; S.redo = []; S.edits = 0; S.selected = null; S.wasPassing = false;
+  Object.assign(S, keep);   // hints, checks and listens are not refunded by a reset
+  afterChange({type:'redo'}); UI.toast('Back to the start.');
+}
+function confirmSafe(msg){ try{ return window.confirm(msg); }catch(e){ return true; } }
+function goLevels(){ UI.show('levels'); UI.levels(); }
+function firstUnfinished(){ for (let i = 0; i < LEVELS.length; i++){ if (!levelUnlocked(i)) return Math.max(0, i-1); if ((S.save.stars[LEVELS[i].id]||0) < 1) return i; } return 0; }
+
+/* =====================================================================
+   13. BOOT & WIRING
+   ===================================================================== */
+function boot(){
+  const saved = Store.load();
+  if (saved){ S.save.stars = saved.stars || {}; Object.assign(S.save.settings, saved.settings || {}); S.save.sandbox = saved.sandbox || null; }
+  try{ S.unlockAll = /[?&]unlockall\b/.test(location.search); }catch(e){}
+  LEVELS.forEach(normaliseLevel);
+  S.verify = verifyLevels();
+  document.body.classList.toggle('rm', reducedMotion());
+  $('nav-motion').setAttribute('aria-pressed', reducedMotion());
+
+  $('btn-start').onclick = () => { AudioEngine.ensure(); openLevel(firstUnfinished()); };
+  $('logo').onclick = () => UI.show('title');
+  $('logo').onkeydown = e => { if (e.key === 'Enter') UI.show('title'); };
+  $('nav-levels').onclick = goLevels;
+  $('nav-sandbox').onclick = openSandbox;
+  $('nav-help').onclick = () => UI.glossary();
+  $('nav-motion').onclick = () => {
+    S.save.settings.reducedMotion = !reducedMotion(); Store.save();
+    document.body.classList.toggle('rm', reducedMotion()); $('nav-motion').setAttribute('aria-pressed', reducedMotion());
+    UI.toast(reducedMotion() ? 'Reduced motion on: no particles or pulsing.' : 'Motion on.');
+  };
+  $('btn-back').onclick = () => S.L && S.L.kind === 'sandbox' ? goLevels() : goLevels();
+  $('btn-play').onclick = () => UI.togglePlay();
+  $('btn-target').onclick = () => UI.hearTarget();
+  $('btn-check').onclick = () => UI.check();
+  $('btn-undo').onclick = undo; $('btn-redo').onclick = redo;
+  $('btn-reset').onclick = () => resetLevel(false);
+  $('btn-hint').onclick = () => UI.showHint();
+  $('btn-reveal').onclick = () => UI.reveal();
+  $('btn-finish').onclick = () => { if (S.evalRes && S.evalRes.requiredPass) UI.results(); };
+  $('btn-reset-progress').onclick = () => { if (confirmSafe('Erase all stars and unlocks?')){ S.save.stars = {}; S.save.sandbox = null; Store.save(); UI.levels(); UI.show('levels'); } };
+  $('modal').addEventListener('click', e => { if (e.target === $('modal')) UI.closeModal(); });
+  $('sb-bpm').oninput = e => { S.L.bpm = +e.target.value; $('sb-bpm-v').textContent = S.L.bpm; saveSandbox(); };
+  $('sb-swing').oninput = e => { S.L.swing = +e.target.value; $('sb-swing-v').textContent = Math.round(S.L.swing*100) + '%'; saveSandbox(); };
+  $('sb-steps').onchange = e => {
+    const steps = +e.target.value, L = S.L;
+    L.steps = steps; L.bars = steps/16;
+    commit(S.notes.filter(n => n.step < steps).map(n => ({...n, len: Math.min(n.len, steps - n.step)})), {type:'redo'});
+    layoutGrid(); saveSandbox();
+  };
+  $('sb-clear').onclick = () => { if (S.notes.length) commit([], {type:'redo'}); };
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (S.screen === 'play') layoutGrid(); }, 80); });
+  UI.titleGrid();
+  UI.show('title');
+  requestAnimationFrame(frame);
+  // test / debug hooks (not part of the player UI)
+  window.GP = { LEVELS, RULES, verifyLevels, evaluateNotes, grooveScore, minMoves, state:S, Seq, openLevel, openSandbox, goLevels,
+    applySolution(){ const L = S.L; const sol = cloneNotes(L.solutionNotes); S.undo.push(S.notes); S.notes = sol; S.edits = minMoves(L.initialNotes, sol, L.tools.includes('move')); afterChange(null); },
+    unlockAll(){ S.unlockAll = true; } };
+}
+boot();
+</script>
+</body>
+</html>
