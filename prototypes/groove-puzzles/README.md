@@ -4,6 +4,10 @@ A DAW-style beat puzzle game. You fix, rebuild and finish drum and bass loops on
 piano-roll grid. It plays like a logic and ear-training puzzle, and you don't need
 any music theory.
 
+- **Audience and look (v2):** kids aged 9–12, in a Frutiger Aero "Aero Studio" style: a daylight
+  sky, glass panels, glossy buttons, jelly notes and bubbles. Every level teaches one named idea
+  ("New idea" strip, "You learned" on the results), and levels are grouped into four chapters.
+  See `ART-DIRECTION.md`.
 - **Hypothesis:** placing notes on a grid against live, plain-English rules
   (with an honest groove score) is fun and teaches rhythm without theory.
 - **Run it:** open `index.html` in a modern browser. It has no build step, no
@@ -20,7 +24,6 @@ any music theory.
   the solvability of all 18 levels, real mouse, keyboard and touch input, the
   playback clock, the fail, permission and budget paths, the sandbox, phone width,
   blocked localStorage, frame rate, the iPhone dock and landscape layout, and an offline reload through the service worker.
-- **Evidence:** `evidence/` holds retained screenshots (title, mid-game, ghost
-  listening, sandbox, phone).
+- **Evidence:** `evidence/` holds retained screenshots. `v2-*` shows the Aero redesign.
 - **Status:** in progress (v1 playable).
 - **Findings:** not playtested with people yet.

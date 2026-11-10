@@ -9,248 +9,335 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <!-- iOS home-screen app (PWA) -->
-<meta name="theme-color" content="#0b0d17">
+<meta name="theme-color" content="#1688dc">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Grooves">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap">
 <meta name="description" content="Fix, rebuild and finish beats on a piano-roll grid. A rhythm logic puzzle; no music theory needed.">
 <style>
 /* =====================================================================
-   STYLES
+   STYLES: "Aero Studio" (Frutiger Aero). Kids 9-12, phone first.
+   Layout: a daylight sky with hills behind frosted-glass panels; the grid is a white glass board.
+   Single committed daylight look (no dark theme), so every colour is set explicitly.
    ===================================================================== */
 :root{
-  --bg:#0b0d17; --bg2:#10132a; --panel:#151a30; --panel2:#1c2242; --line:#283055;
-  --text:#e9ecff; --dim:#9aa3c7; --accent:#8c6cff; --accent2:#4fe3e0;
-  --good:#5dff9a; --bad:#ff6b81; --warn:#ffcf5c; --headw:108px;
-  color-scheme: dark;
+  --sky-top:#1688dc; --sky-mid:#6cc9f7; --sky-low:#e8f8ff;
+  --grass:#63cf2e; --grass-deep:#2f9a18; --aqua:#19b3ef; --aqua-deep:#0077c2;
+  --ink:#0b3556; --ink-soft:#4a7090; --sun:#ffbe0b; --berry:#e5345e;
+  --glass-hi:rgba(255,255,255,.88); --glass-lo:rgba(255,255,255,.62); --rim:rgba(255,255,255,.95);
+  --line:#b9d9ee; --headw:118px;
+  --font:"Nunito",ui-rounded,-apple-system,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-/* safe areas: content clears the notch / home indicator when run full-screen from the Home Screen */
-:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-html,body{margin:0;background:var(--bg);color:var(--text);
-  font:15px/1.45 -apple-system,system-ui,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+html,body{margin:0;background:#e8f8ff;color:var(--ink);font:600 15px/1.45 var(--font);
   -webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;overscroll-behavior:none;touch-action:manipulation}
 body{min-height:100%;overflow-x:hidden}
 .topbar,#screen-play,#screen-levels,.title-screen{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-button,select,input{font:inherit;color:inherit}
-button{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 12px;
-  min-height:38px;cursor:pointer;transition:background .15s,border-color .15s,transform .08s}
-button:hover:not(:disabled){border-color:#3d4780;background:#232a52}
-button:active:not(:disabled){transform:translateY(1px)}
-button:disabled{opacity:.45;cursor:not-allowed}
-button[aria-pressed="true"]{background:#2d2560;border-color:var(--accent)}
-:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
-.btn-primary{background:linear-gradient(135deg,#7a55ff,#b05cff);border-color:#a07dff;font-weight:650}
-.btn-primary:hover:not(:disabled){background:linear-gradient(135deg,#8a68ff,#c070ff)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---- the sky (decor, behind everything) ---- */
+.sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+  background:linear-gradient(180deg,var(--sky-top) 0%,#3aa6ea 22%,var(--sky-mid) 48%,#bfe8fd 72%,var(--sky-low) 100%)}
+.sky .sun{position:absolute;top:-160px;right:-120px;width:520px;height:520px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.95) 0%,rgba(255,255,255,.55) 18%,rgba(255,255,255,.12) 45%,rgba(255,255,255,0) 66%)}
+.sky .glow{position:absolute;left:-20%;top:30%;width:70%;height:40%;border-radius:50%;filter:blur(30px);
+  background:radial-gradient(closest-side,rgba(255,255,255,.55),rgba(255,255,255,0))}
+.sky .hills{position:absolute;left:0;bottom:0;width:100%;height:24vh;min-height:130px}
+.sky .bubbles i{position:absolute;bottom:-70px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;
+  border:1px solid rgba(255,255,255,.75);
+  background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.95) 0 9%,rgba(255,255,255,.28) 20%,rgba(255,255,255,.05) 58%,rgba(255,255,255,.4) 100%);
+  animation:rise var(--d) linear var(--delay) infinite}
+@keyframes rise{to{transform:translate(var(--drift),-120vh)}}
 .bg-pulse{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0;
-  background:radial-gradient(ellipse at 50% 30%,rgba(140,108,255,.22),transparent 65%)}
+  background:radial-gradient(ellipse at 50% 35%,rgba(255,255,255,.55),rgba(255,255,255,0) 60%)}
 #app{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding-block:10px 40px;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.phone-only{display:none}
-.install{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;max-width:420px;margin:18px auto 0;font-size:14px;color:var(--text)}
 
-/* top bar */
+/* ---- glass + gloss primitives ---- */
+.card,.intro,.lesson,.sandbox-bar,.lvl-card,.dialog,.install,.chip,.meta span,.levels-head .muted,.grid-scroll,.chapter-head{
+  background:linear-gradient(180deg,var(--glass-hi),var(--glass-lo));border:1px solid var(--rim);
+  box-shadow:0 10px 28px rgba(0,70,140,.16),inset 0 1px 0 #fff}
+button,select,input{font:inherit;color:inherit}
+button{position:relative;cursor:pointer;min-height:40px;padding:7px 14px;border-radius:999px;font-weight:800;color:var(--ink);
+  background:linear-gradient(180deg,#fff 0%,#f3fbff 49%,#dcf0fc 50%,#ecf8ff 100%);border:1px solid #a7d0ea;
+  box-shadow:inset 0 1px 0 #fff,0 2px 6px rgba(0,70,130,.16);transition:filter .15s,transform .08s}
+button:hover:not(:disabled){filter:brightness(1.04)}
+button:active:not(:disabled){transform:translateY(1px);filter:brightness(.96)}
+button:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.3)}
+button[aria-pressed="true"],.btn-aqua{color:#fff;text-shadow:0 1px 1px rgba(0,60,110,.55);border-color:#0a7fc4;
+  background:linear-gradient(180deg,#a4e8ff 0%,#41c4f5 49%,#0e9fe5 50%,#2bb7f0 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 2px 8px rgba(0,100,180,.3)}
+.btn-primary,#btn-play{color:#fff;text-shadow:0 1px 1px rgba(20,80,0,.55);border-color:#3a9a12;
+  background:linear-gradient(180deg,#c3f79a 0%,#80dd42 49%,#4fbf1c 50%,#69d42c 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 3px 10px rgba(40,130,10,.32)}
+#btn-play.playing{color:#fff;text-shadow:0 1px 1px rgba(120,60,0,.5);border-color:#d07a00;
+  background:linear-gradient(180deg,#ffe08a 0%,#ffbd33 49%,#f59a00 50%,#ffae1f 100%)}
+:focus-visible{outline:3px solid var(--aqua);outline-offset:2px}
+
+/* ---- top bar ---- */
 .topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0 10px}
-.logo{font-weight:800;letter-spacing:.06em;font-size:19px;cursor:pointer;user-select:none;
-  background:linear-gradient(90deg,#ff5d73,#ffb347,#4fe3e0,#8c6cff);-webkit-background-clip:text;background-clip:text;color:transparent}
-.logo small{display:block;font-size:10px;letter-spacing:.2em;color:var(--dim);-webkit-text-fill-color:var(--dim)}
+.logo{font-weight:900;font-size:22px;letter-spacing:.01em;cursor:pointer;color:#fff;line-height:1;
+  text-shadow:0 2px 0 #0a6fb8,0 6px 14px rgba(0,50,110,.35)}
+.logo small{display:block;font-size:11px;font-weight:800;letter-spacing:.22em;color:rgba(255,255,255,.85);text-shadow:none;margin-top:3px}
 .nav{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
-.nav button{min-height:34px;padding:5px 10px;font-size:14px}
+.nav button{min-height:36px;padding:5px 12px;font-size:14px}
+.nav .short{display:none}
 
-/* title */
-.title-screen{text-align:center;padding:6vh 0 20px}
-.title-screen h1{font-size:clamp(38px,9vw,78px);margin:0;line-height:1;letter-spacing:.04em;font-weight:900;
-  background:linear-gradient(90deg,#ff5d73,#ffb347 35%,#4fe3e0 65%,#8c6cff);-webkit-background-clip:text;background-clip:text;color:transparent}
-.title-screen p{color:var(--dim);font-size:17px;max-width:560px;margin:14px auto 26px}
-.title-screen .btn-primary{font-size:20px;padding:14px 34px;border-radius:14px}
-.title-grid{display:grid;grid-template-columns:repeat(16,1fr);gap:4px;max-width:520px;margin:34px auto 0}
-.title-grid i{aspect-ratio:1;border-radius:4px;background:#1a1f3c}
-.title-grid i.on{animation:tg 2.4s infinite}
-@keyframes tg{0%,100%{opacity:.25}10%{opacity:1;transform:scale(1.08)}30%{opacity:.5}}
+/* ---- title ---- */
+.title-screen{text-align:center;padding:5vh 0 24px}
+.title-screen h1{font-size:clamp(46px,12vw,92px);margin:0;line-height:.95;font-weight:900;letter-spacing:-.01em;text-wrap:balance;
+  background:linear-gradient(180deg,#fff 0%,#fff 47%,#d8f3ff 53%,#b6e6ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 3px 0 #0a6fb8) drop-shadow(0 10px 20px rgba(0,50,110,.35))}
+.title-screen .tag{display:inline-block;margin-top:14px;font-size:12px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;
+  color:#fff;padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.6)}
+.title-screen p.pitch{color:#fff;font-size:18px;font-weight:700;max-width:540px;margin:14px auto 26px;text-wrap:balance;
+  text-shadow:0 1px 2px rgba(0,50,110,.45)}
+.title-screen #btn-start{font-size:22px;padding:14px 40px;min-height:58px}
+.title-grid{display:grid;grid-template-columns:repeat(16,1fr);gap:5px;max-width:540px;margin:34px auto 0;padding:12px;border-radius:20px;
+  background:linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,.45));border:1px solid var(--rim);box-shadow:0 12px 30px rgba(0,70,140,.18)}
+.title-grid i{aspect-ratio:1;border-radius:6px;background:rgba(11,53,86,.07);box-shadow:inset 0 1px 2px rgba(11,53,86,.1)}
+.title-grid i.on{box-shadow:inset 0 -2px 0 rgba(0,0,0,.18),inset 0 2px 0 rgba(255,255,255,.65),0 2px 4px rgba(0,60,120,.25);animation:tg 2.4s infinite}
+@keyframes tg{0%,100%{transform:scale(1)}8%{transform:scale(1.18);filter:brightness(1.25)}24%{transform:scale(1)}}
+.install{max-width:430px;margin:18px auto 0;padding:10px 16px;border-radius:16px;font-size:14px}
 
-/* level select */
-.levels-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:6px 0 14px}
-.levels-head h2{margin:0}
-.levels-head .muted{color:var(--dim)}
-.level-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
-.lvl-card{text-align:left;display:flex;flex-direction:column;gap:4px;padding:12px;min-height:118px;
-  background:var(--panel);border-radius:12px;position:relative}
-.lvl-card .n{font-size:12px;color:var(--dim);font-family:ui-monospace,Menlo,Consolas,monospace}
-.lvl-card .t{font-weight:700;font-size:16px}
-.lvl-card .k{font-size:12px;color:var(--dim)}
-.lvl-card .s{margin-top:auto;font-size:18px;letter-spacing:2px;color:var(--warn)}
-.lvl-card.locked{opacity:.55}
-.lvl-card.locked .s{color:var(--dim);font-size:13px;letter-spacing:0}
-.lvl-card .warn{position:absolute;top:8px;right:10px;color:var(--bad);font-weight:800}
-.lvl-card.sandbox{background:linear-gradient(135deg,#1a2a3c,#22184a)}
+/* ---- level select ---- */
+.levels-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 16px}
+.levels-head h2{margin:0;font-size:30px;font-weight:900;color:#fff;text-shadow:0 2px 0 #0a6fb8,0 6px 14px rgba(0,50,110,.3)}
+.levels-head .muted{padding:4px 12px;border-radius:999px;font-weight:800;font-size:14px}
+.chapter{margin:0 0 22px}
+.chapter-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:10px 14px;border-radius:16px;margin-bottom:10px}
+.chapter-head .cn{font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--aqua-deep)}
+.chapter-head h3{margin:0;font-size:20px;font-weight:900}
+.chapter-head p{margin:0;color:var(--ink-soft);font-size:14px;flex-basis:100%}
+.level-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px}
+.lvl-card{text-align:left;display:flex;flex-direction:column;gap:3px;padding:12px;min-height:140px;border-radius:20px;color:var(--ink);font-weight:700}
+.lvl-card:hover:not(:disabled){filter:none;transform:translateY(-2px);box-shadow:0 14px 30px rgba(0,70,140,.22),inset 0 1px 0 #fff}
+.lvl-card .orb{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:15px;color:#fff;margin-bottom:4px;
+  text-shadow:0 1px 1px rgba(0,60,110,.5);border:1px solid #0a7fc4;font-variant-numeric:tabular-nums;
+  background:radial-gradient(circle at 50% 30%,#b6ecff 0%,#41c4f5 45%,#0a8fd8 100%);box-shadow:inset 0 2px 2px rgba(255,255,255,.7),0 2px 6px rgba(0,90,170,.3)}
+.lvl-card.done .orb{border-color:#3a9a12;background:radial-gradient(circle at 50% 30%,#d4fbb3 0%,#7edb3e 45%,#3fa513 100%);text-shadow:0 1px 1px rgba(20,80,0,.5)}
+.lvl-card .t{font-weight:900;font-size:17px;line-height:1.2}
+.lvl-card .k{font-size:12.5px;color:var(--ink-soft)}
+.lvl-card .learn{font-size:12.5px;color:var(--aqua-deep);font-weight:800}
+.lvl-card .s{margin-top:auto;font-size:20px;letter-spacing:2px;color:var(--sun);text-shadow:0 1px 0 #b77b00}
+.lvl-card .s .no{color:#b9cfe0;text-shadow:none}
+.lvl-card.locked{opacity:.62;filter:saturate(.4)}
+.lvl-card.locked .orb{background:radial-gradient(circle at 50% 30%,#eef4f8,#b9c9d6);border-color:#9fb3c4}
+.lvl-card.locked .s{color:var(--ink-soft);font-size:13px;letter-spacing:0;text-shadow:none}
+.lvl-card .warn{position:absolute;top:10px;right:12px;color:var(--berry);font-weight:900}
+.lvl-card.sandbox{background:linear-gradient(160deg,rgba(255,255,255,.9),rgba(214,246,255,.7))}
 
-/* play */
-.play-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.play-head h2{margin:0;font-size:22px}
-.lvl-num{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--dim)}
-.badge{font-size:12px;padding:3px 8px;border-radius:99px;background:#272050;border:1px solid #4a3c99;color:#cfc2ff;white-space:nowrap}
-.meta{display:flex;gap:8px;margin-left:auto;color:var(--dim);font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace;flex-wrap:wrap}
-.meta span{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:3px 8px}
-.intro{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;
-  padding:10px 12px;margin:10px 0;max-width:900px}
-.intro b{color:#fff}
-.transport{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0}
+/* ---- play screen ---- */
+.play-head{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;color:#fff}
+.play-head h2{margin:0;font-size:24px;font-weight:900;text-shadow:0 2px 0 #0a6fb8,0 5px 12px rgba(0,50,110,.3)}
+.lvl-num{font-weight:900;font-size:12px;letter-spacing:.16em;opacity:.9;text-shadow:0 1px 2px rgba(0,50,110,.4)}
+.badge{font-size:12px;font-weight:900;padding:4px 10px;border-radius:999px;color:#fff;white-space:nowrap;border:1px solid #0a7fc4;
+  text-shadow:0 1px 1px rgba(0,60,110,.5);background:linear-gradient(180deg,#a4e8ff 0%,#41c4f5 49%,#0e9fe5 50%,#2bb7f0 100%)}
+.meta{display:flex;gap:6px;margin-left:auto;font-size:13px;flex-wrap:wrap;color:var(--ink)}
+.meta span{border-radius:999px;padding:3px 10px;font-weight:800;font-variant-numeric:tabular-nums}
+.lesson{display:flex;gap:8px 10px;align-items:baseline;flex-wrap:wrap;margin:10px 0 0;padding:9px 14px;border-radius:16px;max-width:900px}
+.lesson .lt{font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#fff;padding:2px 9px;border-radius:999px;border:1px solid #3a9a12;
+  text-shadow:0 1px 1px rgba(20,80,0,.5);background:linear-gradient(180deg,#c3f79a 0%,#80dd42 49%,#4fbf1c 50%,#69d42c 100%)}
+.lesson b{font-size:16px;font-weight:900}
+.lesson span.li{color:var(--ink-soft);font-size:14px}
+.intro{border-radius:16px;padding:10px 14px;margin:8px 0;max-width:900px;font-weight:600}
+.intro b{font-weight:900}
+.transport{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:10px 0 8px}
 .dock,.actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.transport .sep{width:1px;height:28px;background:var(--line);margin:0 4px}
-#btn-play{min-width:104px;font-weight:700}
-#btn-play.playing{background:#14332a;border-color:var(--good)}
+.transport .sep{width:1px;height:28px;background:rgba(11,53,86,.15);margin:0 4px}
+#btn-play{min-width:110px}
 .tools{display:flex;gap:4px;flex-wrap:wrap}
-.tools button{font-size:13px;padding:5px 9px}
-.beat-led{width:14px;height:14px;border-radius:50%;background:#2a2f55;margin-left:4px;flex:none}
+.tools button{font-size:13px;padding:5px 11px}
+.beat-led{width:16px;height:16px;border-radius:50%;margin-left:4px;flex:none;border:1px solid #8fb6cf;
+  background:radial-gradient(circle at 50% 30%,#fff,#cfe3ef 70%);transition:background .06s}
 .budget{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px;min-height:10px}
-.chip{font-size:13px;background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:3px 10px}
-.chip.warn{border-color:var(--warn);color:var(--warn)}
-.chip.bad{border-color:var(--bad);color:#ffc2cb}
-.fail-banner{width:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#3a1622;border:1px solid var(--bad);
-  border-radius:10px;padding:8px 10px}
-.main{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px;align-items:start}
+.chip{font-size:13px;border-radius:999px;padding:4px 12px;font-weight:800}
+.chip.warn{border-color:#f0a400;background:linear-gradient(180deg,#fff7dc,#ffe9a8)}
+.chip.bad{border-color:var(--berry);background:linear-gradient(180deg,#ffe8ee,#ffd0dc)}
+.fail-banner{width:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-radius:16px;padding:10px 12px;color:#7a0f2c;
+  background:linear-gradient(180deg,#fff0f4,#ffd6e0);border:1px solid #f39ab0;box-shadow:0 6px 18px rgba(200,40,80,.18)}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
 .grid-wrap{min-width:0}
-.grid-scroll{display:flex;overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#0d1022;position:relative}
-.lane-heads{position:sticky;left:0;z-index:2;flex:none;width:var(--headw);background:var(--panel);border-right:1px solid var(--line)}
-.lane-head{position:relative;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:2px 6px;
-  border-bottom:1px solid var(--line);overflow:hidden}
-.lane-head .nm{display:flex;align-items:center;gap:5px;font-weight:650;font-size:13px;white-space:nowrap;
-  background:none;border:none;padding:0;min-height:0;text-align:left}
-.lane-head .sw{width:9px;height:9px;border-radius:3px;flex:none}
+.grid-scroll{display:flex;overflow-x:auto;border-radius:18px;position:relative;padding:0}
+.lane-heads{position:sticky;left:0;z-index:2;flex:none;width:var(--headw);border-right:1px solid var(--line);
+  background:linear-gradient(90deg,#f5fbff,#e6f4fd)}
+.lane-head{position:relative;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:2px 7px;border-bottom:1px solid var(--line);overflow:hidden}
+.lane-head .nm{display:flex;align-items:center;gap:6px;font-weight:900;font-size:13.5px;white-space:nowrap;color:var(--ink);
+  background:none;border:none;box-shadow:none;padding:0;min-height:0;text-align:left;border-radius:6px}
+.lane-head .ico{width:24px;height:24px;flex:none;filter:drop-shadow(0 1px 1px rgba(0,60,120,.2))}
 .lane-head .ms{display:flex;gap:3px}
-.lane-head .ms button{min-height:20px;padding:0 6px;font-size:11px;border-radius:5px;line-height:18px}
-.lane-head .tag{font-size:10px;color:var(--dim)}
-.lane-head.muted .nm{text-decoration:line-through;opacity:.6}
-.lane-head .rowlbl{position:absolute;right:4px;font-size:10px;color:var(--dim);font-family:ui-monospace,Menlo,Consolas,monospace;line-height:1}
-.lane-head.pitched{justify-content:flex-start;padding-top:5px;padding-right:24px}
-@media (max-width:600px){ .lane-head.pitched .ms{flex-direction:column;align-items:flex-start} }
+.lane-head .ms button{min-height:22px;padding:0 8px;font-size:11px;font-weight:900}
+.lane-head .tag{font-size:10px;color:var(--ink-soft);font-weight:800}
+.lane-head.muted .nm{text-decoration:line-through;opacity:.55}
+.lane-head .rowlbl{position:absolute;right:5px;font-size:10px;font-weight:900;color:var(--ink-soft);line-height:1}
+.lane-head.pitched{justify-content:flex-start;padding-top:6px;padding-right:24px}
 #grid{display:block;flex:none;cursor:pointer}
 #grid:focus-visible{outline:none}
-.grid-scroll:focus-within{border-color:var(--accent2)}
-.grid-help{color:var(--dim);font-size:12.5px;margin:6px 2px}
+.grid-scroll:focus-within{box-shadow:0 0 0 3px var(--aqua),0 10px 28px rgba(0,70,140,.16)}
+.grid-help{color:var(--ink);font-size:12.5px;margin:8px 4px;font-weight:700;opacity:.8}
 .side{display:flex;flex-direction:column;gap:10px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
-.card h3{margin:0 0 8px;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
-.rules{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.rules li{display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:start}
-.rules .ic{width:24px;height:24px;border-radius:50%;border:2px solid #4a5285;display:grid;place-items:center;font-size:13px;font-weight:900;color:#4a5285;transition:all .2s}
-.rules li.pass .ic{background:var(--good);border-color:var(--good);color:#06240f}
-.rules .tx{font-size:14px}
-.rules li.pass .tx{color:#d7ffe4}
-.rules .st{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-left:4px;color:var(--dim)}
-.rules li.pass .st{color:var(--good)}
-.rules .opt{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);border:1px solid #6b5a2a;border-radius:5px;padding:0 4px;margin-right:5px}
-.rules .why{display:block;color:var(--dim);font-size:12.5px}
-.rules .det{display:block;color:#b8c0ea;font-size:12.5px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.card{border-radius:20px;padding:14px}
+.card h3{margin:0 0 10px;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--aqua-deep)}
+.rules{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.rules li{display:grid;grid-template-columns:28px 1fr;gap:9px;align-items:start}
+.rules .ic{width:26px;height:26px;border-radius:50%;border:2px solid #9cc3dc;display:grid;place-items:center;font-size:14px;font-weight:900;color:#fff;
+  background:radial-gradient(circle at 50% 30%,#fff,#e3f1fa);transition:all .2s}
+.rules li.pass .ic{border-color:#3a9a12;text-shadow:0 1px 1px rgba(20,80,0,.5);
+  background:radial-gradient(circle at 50% 30%,#d4fbb3 0%,#7edb3e 45%,#3fa513 100%);box-shadow:0 2px 6px rgba(40,130,10,.35)}
+.rules .tx{font-size:14.5px;font-weight:800}
+.rules .st{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-left:6px;color:var(--berry)}
+.rules li.pass .st{color:var(--grass-deep)}
+.rules .opt{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#8a5a00;border-radius:999px;padding:1px 7px;margin-right:6px;
+  border:1px solid #f0a400;background:linear-gradient(180deg,#fff3c4,#ffd766)}
+.rules .why{display:block;color:var(--ink-soft);font-size:13px;font-weight:600}
+.rules .det{display:block;color:var(--aqua-deep);font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums}
 .rules li.pop .ic{animation:pop .45s}
-@keyframes pop{40%{transform:scale(1.35)}}
-.stars{font-size:30px;letter-spacing:3px;color:var(--warn);line-height:1}
-.stars-lbl{color:var(--dim);font-size:13px}
-.crit{list-style:none;padding:0;margin:8px 0 0;font-size:13px;display:flex;flex-direction:column;gap:3px}
+@keyframes pop{40%{transform:scale(1.4)}}
+.stars{font-size:32px;letter-spacing:4px;color:var(--sun);line-height:1;text-shadow:0 2px 0 #c98800,0 4px 10px rgba(200,140,0,.35)}
+.stars-lbl{color:var(--ink-soft);font-size:13px;font-weight:700;margin-top:4px}
+.crit{list-style:none;padding:0;margin:8px 0 0;font-size:13px;display:flex;flex-direction:column;gap:3px;font-weight:700}
 .crit li::before{content:attr(data-mark);display:inline-block;width:20px;font-weight:900}
-.crit li.ok{color:#d7ffe4}
-.crit li.no{color:var(--dim)}
-.groove-total{display:flex;align-items:baseline;gap:8px;margin-top:10px}
-.groove-total b{font-size:28px;font-family:ui-monospace,Menlo,Consolas,monospace}
-.parts{display:flex;flex-direction:column;gap:6px;margin-top:6px}
-.part .row{display:flex;justify-content:space-between;font-size:13px}
-.part .bar{height:6px;background:#262c52;border-radius:4px;overflow:hidden;margin:2px 0}
-.part .bar i{display:block;height:100%;background:linear-gradient(90deg,#4fe3e0,#8c6cff);border-radius:4px;transition:width .3s}
-.part .why{font-size:12px;color:var(--dim)}
+.crit li.ok{color:var(--grass-deep)}
+.crit li.no{color:var(--ink-soft)}
+.groove-total{display:flex;align-items:baseline;gap:8px;margin-top:12px;font-weight:800}
+.groove-total b{font-size:32px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--aqua-deep)}
+.parts{display:flex;flex-direction:column;gap:7px;margin-top:6px}
+.part .row{display:flex;justify-content:space-between;font-size:13.5px;font-weight:800;font-variant-numeric:tabular-nums}
+.part .bar{height:9px;background:#d9eaf5;border-radius:99px;overflow:hidden;margin:3px 0;box-shadow:inset 0 1px 2px rgba(11,53,86,.15)}
+.part .bar i{display:block;height:100%;border-radius:99px;transition:width .3s;
+  background:linear-gradient(180deg,rgba(255,255,255,.55) 0 45%,rgba(255,255,255,0) 46%),linear-gradient(90deg,#19b3ef,#63cf2e)}
+.part .why{font-size:12.5px;color:var(--ink-soft);font-weight:600}
 .part.na{opacity:.5}
-.tip{margin-top:10px;background:#1f1a3b;border:1px solid #4a3c99;border-radius:9px;padding:8px 10px;font-size:13.5px}
-.tip b{color:#cfc2ff}
-#btn-finish{width:100%;min-height:46px;font-size:16px}
-.sandbox-bar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:10px 0}
-.sandbox-bar label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--dim)}
-.sandbox-bar input[type=range]{width:120px;accent-color:var(--accent)}
-.sandbox-bar select{background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:4px}
+.tip{margin-top:12px;border-radius:14px;padding:9px 12px;font-size:14px;font-weight:700;
+  background:linear-gradient(180deg,#e9f9ff,#d2f0ff);border:1px solid #9fdcf6}
+.tip b{color:var(--aqua-deep);font-weight:900}
+#btn-finish{width:100%;min-height:50px;font-size:17px}
+.sandbox-bar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;border-radius:16px;padding:9px 14px;margin:10px 0}
+.sandbox-bar label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800}
+.sandbox-bar input[type=range]{width:120px;accent-color:var(--aqua)}
+.sandbox-bar select{border:1px solid #a7d0ea;border-radius:10px;padding:4px 6px;background:#fff}
 
-/* modal + toast */
-.modal{position:fixed;inset:0;background:rgba(5,6,14,.72);display:grid;place-items:center;z-index:50;padding:16px}
+/* ---- dialogs + toasts ---- */
+.modal{position:fixed;inset:0;background:rgba(10,70,130,.35);display:grid;place-items:center;z-index:50;padding:16px;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .modal[hidden]{display:none}
-.dialog{background:var(--panel);border:1px solid #3d4780;border-radius:16px;max-width:520px;width:100%;max-height:90vh;overflow:auto;padding:18px 18px 16px;
-  box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.dialog h2{margin:0 0 6px}
-.dialog .stars{font-size:44px;margin:4px 0}
-.dialog .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.dialog .unl{background:#132a22;border:1px solid #2f7a52;border-radius:9px;padding:8px 10px;margin-top:10px;font-size:14px}
-.dialog dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
-.dialog dt{font-weight:700}
-.dialog dd{margin:0;color:var(--dim)}
-.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#252b55;border:1px solid #4a54a0;color:#fff;
-  border-radius:10px;padding:9px 14px;z-index:60;max-width:min(92vw,520px);font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.5);
-  transition:opacity .25s;opacity:0;pointer-events:none}
+.dialog{border-radius:24px;max-width:520px;width:100%;max-height:90vh;overflow:auto;padding:20px 20px 18px;
+  background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(238,249,255,.93))}
+.dialog h2{margin:0 0 6px;font-size:26px;font-weight:900;color:var(--aqua-deep)}
+.dialog .stars{font-size:48px;margin:4px 0}
+.dialog .actions{display:flex;gap:8px;flex-wrap:wrap;margin:16px -20px -18px;padding:12px 20px 16px;position:sticky;bottom:-18px;
+  background:linear-gradient(180deg,#f2faff,#e2f4ff);border-top:1px solid #cfe6f5;box-shadow:0 -6px 16px rgba(0,70,140,.08);border-radius:0 0 24px 24px}
+.dialog .unl{border-radius:14px;padding:9px 12px;margin-top:10px;font-size:14px;background:linear-gradient(180deg,#f0ffe4,#d9f8bf);border:1px solid #9edb73}
+.dialog .learned{border-radius:14px;padding:10px 12px;margin:10px 0 4px;font-size:14.5px;background:linear-gradient(180deg,#e9f9ff,#d2f0ff);border:1px solid #9fdcf6}
+.dialog .learned .lt{display:block;font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--aqua-deep);margin-bottom:2px}
+.dialog dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:14px}
+.dialog dt{font-weight:900}
+.dialog dd{margin:0;color:var(--ink-soft)}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);color:#fff;border-radius:16px;padding:10px 16px;z-index:60;
+  max-width:min(92vw,520px);font-size:14.5px;font-weight:800;transition:opacity .25s;opacity:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(23,92,150,.96),rgba(11,53,86,.96));border:1px solid rgba(255,255,255,.5);box-shadow:0 10px 30px rgba(0,50,100,.35)}
 .toast.show{opacity:1}
-.toast.bad{background:#46182a;border-color:var(--bad)}
-.toast.good{background:#123626;border-color:var(--good)}
+.toast.bad{background:linear-gradient(180deg,#f0587c,#c81f4b)}
+.toast.good{background:linear-gradient(180deg,#6ad63a,#2f9a18)}
+.phone-only{display:none}
 
 @media (max-width:1000px){ .main{grid-template-columns:1fr} }
 /* ---- Phone layout (portrait, or landscape on a short screen): thumb dock at the bottom ---- */
 @media (max-width:600px), (max-height:500px) and (orientation:landscape){
-  :root{--headw:54px}
+  :root{--headw:62px}
   body[data-screen="play"] .topbar{display:none}
+  .nav{width:100%;margin-left:0;flex-wrap:nowrap}
+  .nav button{flex:1 1 auto;padding:5px 8px;font-size:13px;min-height:40px}
+  .nav .long{display:none}
+  .nav .short{display:inline}
+  body[data-screen="title"] .logo{display:none}
   .phone-only{display:block}
   .desk-only{display:none!important}
-  #app{padding-block:8px calc(92px + env(safe-area-inset-bottom,0px))}
-  .play-head{gap:6px 8px}
-  .play-head h2{font-size:18px}
+  #app{padding-block:8px calc(96px + env(safe-area-inset-bottom,0px))}
+  .play-head h2{font-size:20px}
   #btn-back .lbl{display:none}
-  #btn-back,#btn-help2{min-width:42px;min-height:40px;padding:4px 10px}
+  #btn-back,#btn-help2{min-width:44px;min-height:44px;padding:4px 12px}
   .meta{width:100%;margin-left:0;gap:4px}
-  .meta span{font-size:12px;padding:2px 6px}
-  .intro{font-size:14px;margin:8px 0;padding:8px 10px}
-  .intro.collapsed{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;
-    padding-block:0;border-top:8px solid transparent;border-bottom:8px solid transparent}
+  .meta span{font-size:12px;padding:2px 8px}
+  .lesson{padding:7px 12px;margin-top:8px}
+  .lesson b{font-size:15px}
+  .intro{font-size:14px;margin:8px 0;padding:8px 12px}
+  .intro.collapsed{cursor:pointer}
+  .intro.collapsed .clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .transport{margin:6px 0}
   .transport .sep{display:none}
-  .actions{width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .actions{width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:2px 2px 6px}
   .actions::-webkit-scrollbar{display:none}
-  .actions button{flex:none;padding:6px 10px;font-size:14px;min-height:40px}
+  .actions button{flex:none;padding:6px 12px;font-size:14px;min-height:40px}
   .dock{position:fixed;left:0;right:0;bottom:0;z-index:40;flex-wrap:nowrap;gap:6px;
-    padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
-    background:rgba(13,16,34,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
-  .dock button{flex:1 1 0;min-width:0;min-height:50px;padding:6px 4px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    padding:9px max(16px,env(safe-area-inset-right,0px)) calc(9px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+    background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(226,244,255,.86));border-top:1px solid var(--rim);
+    box-shadow:0 -6px 24px rgba(0,70,140,.18);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4)}
+  .dock button{flex:1 1 0;min-width:0;min-height:52px;padding:6px 4px;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .dock .lbl{display:none}
   .dock #btn-play{flex:1.25 1 0}
   .dock #btn-undo,.dock #btn-redo,.dock #btn-tool{flex:.8 1 0}
   .dock #btn-goals{flex:2 1 0}
   .lane-head{padding:2px 4px}
-  .lane-head .nm{font-size:11px}
+  .lane-head .nm{font-size:11px;gap:3px}
+  .lane-head .ico{width:18px;height:18px}
   .lane-head .tag{display:none}
-  .lane-head .ms button{min-height:22px;padding:0 5px}
+  .lane-head .ms button{min-height:22px;padding:0 6px}
   .lane-head.pitched{padding-right:20px}
   .lane-head.pitched .ms{flex-direction:column;align-items:flex-start}
   .grid-help{display:none}
   .sandbox-bar select{font-size:16px}
-  .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .toast{bottom:calc(88px + env(safe-area-inset-bottom,0px))}
   .dialog{max-height:calc(100% - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+  .level-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .lvl-card{min-height:150px}
 }
+body[data-screen="title"] .logo{visibility:hidden}
 body.rm *{animation:none!important;transition:none!important}
+body.rm .sky .bubbles{display:none}
+@media (prefers-reduced-motion:reduce){ .sky .bubbles{display:none} }
 </style>
 </head>
 <body>
+<!-- Decorative sky: gradient, sun, rising bubbles and glossy hills (Frutiger Aero) -->
+<div class="sky" aria-hidden="true">
+  <div class="sun"></div><div class="glow"></div>
+  <div class="bubbles" id="bubbles"></div>
+  <svg class="hills" viewBox="0 0 1200 240" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="hill-back" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9ec74"/><stop offset="1" stop-color="#58c424"/></linearGradient>
+      <linearGradient id="hill-front" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#86e046"/><stop offset=".6" stop-color="#3fae1a"/><stop offset="1" stop-color="#2a8c12"/></linearGradient>
+    </defs>
+    <path d="M0 118 C 200 38 380 58 560 108 S 900 168 1200 66 L1200 240 L0 240 Z" fill="url(#hill-back)" opacity=".9"/>
+    <path d="M0 168 C 220 108 420 128 640 163 S 1000 198 1200 136 L1200 240 L0 240 Z" fill="url(#hill-front)"/>
+    <path d="M0 170 C 220 110 420 130 640 165 S 1000 200 1200 138" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="3"/>
+  </svg>
+</div>
 <div class="bg-pulse" id="bg-pulse" aria-hidden="true"></div>
 <div id="app">
   <header class="topbar">
-    <div class="logo" id="logo" role="button" tabindex="0" aria-label="Groove Puzzles home">GROOVE PUZZLES<small>BEAT LOGIC</small></div>
+    <div class="logo" id="logo" role="button" tabindex="0" aria-label="Groove Puzzles home">Groove Puzzles<small>BEAT-MAKING PUZZLES</small></div>
     <nav class="nav" aria-label="Main">
       <button id="nav-levels">Levels</button>
       <button id="nav-sandbox">Sandbox</button>
-      <button id="nav-motion" aria-pressed="false" title="Reduce motion: no particles or pulsing">Reduce motion</button>
+      <button id="nav-motion" aria-pressed="false" aria-label="Reduce motion" title="Reduce motion: no bubbles or pulsing"><span class="long">Reduce motion</span><span class="short">Calm</span></button>
       <button id="nav-help" aria-label="Help and glossary">? Help</button>
     </nav>
   </header>
 
   <!-- Title -->
   <section id="screen-title" class="title-screen">
-    <h1>GROOVE<br>PUZZLES</h1>
-    <p>You're the producer. Fix broken beats, rebuild ones you hear, and finish loops. Tap the grid to place sounds. No music theory needed.</p>
+    <h1>Groove<br>Puzzles</h1>
+    <span class="tag">Beat-making puzzles</span>
+    <p class="pitch">Learn how producers build beats. Fix broken loops, copy beats by ear and make your own groove, one puzzle at a time.</p>
     <button class="btn-primary" id="btn-start">▶ Start</button>
     <p class="install" id="install-hint" hidden>📲 <b>Make it an app:</b> tap <b>Share</b>, then <b>Add to Home Screen</b>. It opens full-screen and works offline.</p>
     <div class="title-grid" id="title-grid" aria-hidden="true"></div>
@@ -258,9 +345,9 @@ body.rm *{animation:none!important;transition:none!important}
 
   <!-- Level select -->
   <section id="screen-levels" hidden>
-    <div class="levels-head"><h2>Levels</h2><span class="muted" id="levels-summary"></span>
-      <button id="btn-reset-progress" style="margin-left:auto;font-size:13px">Reset progress</button></div>
-    <div class="level-grid" id="level-grid"></div>
+    <div class="levels-head"><h2>Levels</h2><span class="muted" id="levels-summary"></span></div>
+    <div id="level-grid"></div>
+    <p style="text-align:center;margin:8px 0 0"><button id="btn-reset-progress" style="font-size:13px;min-height:36px">Reset progress</button></p>
   </section>
 
   <!-- Play -->
@@ -273,6 +360,7 @@ body.rm *{animation:none!important;transition:none!important}
       <button id="btn-help2" class="phone-only" aria-label="Help and glossary" style="margin-left:auto">?</button>
       <div class="meta"><span id="lvl-bpm"></span><span id="lvl-swing"></span><span id="lvl-steps"></span></div>
     </div>
+    <div class="lesson" id="lvl-lesson"><span class="lt">New idea</span><b id="lesson-name"></b><span class="li" id="lesson-idea"></span></div>
     <p class="intro" id="lvl-intro"></p>
     <div class="sandbox-bar" id="sandbox-bar" hidden>
       <label>Tempo <input type="range" id="sb-bpm" min="60" max="180" step="1"> <span id="sb-bpm-v"></span></label>
@@ -338,18 +426,42 @@ body.rm *{animation:none!important;transition:none!important}
    1. CONSTANTS: lanes, kinds, tools, velocities
    ===================================================================== */
 const LANES = {
-  kick:  { name:'Kick', short:'Kick',     color:'#ff5d73', gain:0.95, desc:'The deep thump that anchors the beat.' },
-  snare: { name:'Snare', short:'Snr',    color:'#ffb347', gain:0.6,  desc:'The sharp crack, usually on beats 2 and 4.' },
-  clap:  { name:'Clap', short:'Clap',     color:'#ffe066', gain:0.55, desc:'A hand-clap snap; often takes the snare\'s job.' },
-  hat:   { name:'Hat', short:'Hat',      color:'#4fe3e0', gain:0.32, desc:'Closed hi-hat: a short "tss" that keeps time.' },
-  ohat:  { name:'Open hat', short:'OHat', color:'#4c9dff', gain:0.28, desc:'A hi-hat left ringing: a longer "tsssh".' },
-  perc:  { name:'Perc', short:'Perc',     color:'#c08bff', gain:0.4,  desc:'A woody tick for extra bounce.' },
-  bass:  { name:'Bass', short:'Bass',     color:'#5dff9a', gain:0.55, pitched:true, midi:[36,39,41,43,46,48],
+  kick:  { name:'Kick', short:'Kick',     color:'#ff4f6e', gain:0.95, desc:'The deep thump that anchors the beat.' },
+  snare: { name:'Snare', short:'Snr',    color:'#ff9a1f', gain:0.6,  desc:'The sharp crack, usually on beats 2 and 4.' },
+  clap:  { name:'Clap', short:'Clap',     color:'#f5c400', gain:0.55, desc:'A hand-clap snap; often takes the snare\'s job.' },
+  hat:   { name:'Hat', short:'Hat',      color:'#14c2d6', gain:0.32, desc:'Closed hi-hat: a short "tss" that keeps time.' },
+  ohat:  { name:'Open hat', short:'OHat', color:'#3b82f6', gain:0.28, desc:'A hi-hat left ringing: a longer "tsssh".' },
+  perc:  { name:'Perc', short:'Perc',     color:'#9b5cff', gain:0.4,  desc:'A woody tick for extra bounce.' },
+  bass:  { name:'Bass', short:'Bass',     color:'#3fbf3a', gain:0.55, pitched:true, midi:[36,39,41,43,46,48],
            desc:'Low notes. Every row is in key, so nothing sounds wrong.' },
-  lead:  { name:'Lead', short:'Lead',     color:'#ff8ad8', gain:0.22, pitched:true, midi:[60,63,65,67,70,72],
+  lead:  { name:'Lead', short:'Lead',     color:'#ff5cc8', gain:0.22, pitched:true, midi:[60,63,65,67,70,72],
            desc:'A melody voice, also locked to the key.' },
 };
 const LANE_ORDER = ['kick','snare','clap','hat','ohat','perc','bass','lead'];
+/** Instrument icons per lane: ink outline, filled with the lane colour (C). Drawn at 24x24. */
+const INK = '#0b3556';
+const LANE_ICONS = {
+  kick:  C => `<circle cx="12" cy="11" r="8.2" fill="${C}" stroke="${INK}" stroke-width="1.6"/><circle cx="12" cy="11" r="4.4" fill="#fff" fill-opacity=".6" stroke="${INK}" stroke-width="1.2"/><path d="M7.5 18.5 5.5 22.5M16.5 18.5l2 4" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>`,
+  snare: C => `<path d="M4 10v6.5c0 1.7 3.6 3 8 3s8-1.3 8-3V10" fill="${C}" stroke="${INK}" stroke-width="1.5"/><ellipse cx="12" cy="10" rx="8" ry="3" fill="#fff" stroke="${INK}" stroke-width="1.5"/><path d="M6 15.5l2 1.5 2-1.5 2 1.5 2-1.5 2 1.5 2-1.5" fill="none" stroke="#fff" stroke-width="1.2"/><path d="M14 2.5l-3 6M20.5 3.5l-6 5" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>`,
+  clap:  C => `<rect x="4.5" y="7" width="7" height="13" rx="3.5" transform="rotate(-16 8 13.5)" fill="${C}" stroke="${INK}" stroke-width="1.5"/><rect x="12.5" y="7" width="7" height="13" rx="3.5" transform="rotate(16 16 13.5)" fill="${C}" stroke="${INK}" stroke-width="1.5"/><path d="M12 1.5v3M7 2.5l1.3 2.2M17 2.5l-1.3 2.2" stroke="${INK}" stroke-width="1.5" stroke-linecap="round"/>`,
+  hat:   C => `<path d="M12 7v15M8 22h8" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="12" cy="8" rx="8.5" ry="2.2" fill="${C}" stroke="${INK}" stroke-width="1.4"/><ellipse cx="12" cy="10.4" rx="8.5" ry="2.2" fill="${C}" stroke="${INK}" stroke-width="1.4"/>`,
+  ohat:  C => `<path d="M12 5v17M8 22h8" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="12" cy="5.5" rx="8.5" ry="2.2" fill="${C}" stroke="${INK}" stroke-width="1.4"/><ellipse cx="12" cy="12" rx="8.5" ry="2.2" fill="${C}" stroke="${INK}" stroke-width="1.4"/><path d="M1.5 8.6c.8.6.8 1.6 0 2.2M22.5 8.6c-.8.6-.8 1.6 0 2.2" fill="none" stroke="${INK}" stroke-width="1.2" stroke-linecap="round"/>`,
+  perc:  C => `<path d="M10 4V2.2h4V4" fill="none" stroke="${INK}" stroke-width="1.5"/><path d="M8 4h8l3.2 14H4.8z" fill="${C}" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 6.5 8.2 15" stroke="#fff" stroke-opacity=".7" stroke-width="1.3" stroke-linecap="round"/><circle cx="12" cy="20.3" r="1.6" fill="${INK}"/>`,
+  bass:  C => `<path d="M11.2 14.6 20 4.2" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"/><rect x="18.4" y="1.4" width="4" height="4.6" rx="1.2" transform="rotate(40 20.4 3.7)" fill="${INK}"/><path d="M8.6 12.2c-3.3 0-5.6 2.3-5.6 5s2.2 5.3 5 5.3c2.2 0 3.4-1.2 3.9-2.8.5-1.6 2.2-2.1 2.2-3.8 0-2.2-2.3-3.7-5.5-3.7z" fill="${C}" stroke="${INK}" stroke-width="1.5"/><circle cx="8.6" cy="17.3" r="1.5" fill="#fff" stroke="${INK}" stroke-width="1"/>`,
+  lead:  C => `<rect x="1.8" y="5.5" width="20.4" height="13" rx="2.2" fill="#fff" stroke="${INK}" stroke-width="1.5"/><rect x="1.8" y="5.5" width="20.4" height="3.6" rx="2" fill="${C}" stroke="${INK}" stroke-width="1.5"/><path d="M6.9 9.1v9.4M12 9.1v9.4M17.1 9.1v9.4" stroke="${INK}" stroke-width="1.1"/><path d="M5.2 9.1h3.2v5.2H5.2zM10.4 9.1h3.2v5.2h-3.2zM15.6 9.1h3.2v5.2h-3.2z" fill="${INK}"/>`,
+};
+const laneIcon = lane => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${LANE_ICONS[lane](LANES[lane].color)}</svg>`;
+/** Chapters group the levels by skill on the level-select screen (data: level ids). */
+const CHAPTERS = [
+  { title:'First Beats', blurb:'Kick, snare, hi-hats and your ears: the four things every beat is built on.',
+    levels:['first-kick','backbeat','echo','four-floor'] },
+  { title:'Fix It Up', blurb:'Repair broken loops, fill the holes and learn when to leave space.',
+    levels:['clumsy','hat-hole','bap-ghost','avalanche'] },
+  { title:'Bass Camp', blurb:'Low notes: lock the bass to the kick, hold notes and copy basslines.',
+    levels:['meet-bass','kick-vs-bass','hold-note','two-bar-bass'] },
+  { title:'Genre Tour', blurb:'Build real styles: boom-bap, house, trap, drum & bass, lo-fi, and a final remix.',
+    levels:['boom-bap','house','trap','dnb','lofi-fill','boss'] },
+];
 const HEAVY = new Set(['kick','snare','clap','bass']);       // lanes judged for placement
 const NOTE_NAMES = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 const VEL = { 1:{name:'soft', gain:0.42}, 2:{name:'medium', gain:0.72}, 3:{name:'loud', gain:1} };
@@ -398,7 +510,7 @@ const ALL16 = [...Array(16).keys()];
 const EIGHTHS32 = [...Array(16).keys()].map(i=>i*2);
 
 const LEVELS = [
-  { id:'first-kick', title:'First Kick', kind:'brief', bpm:92, swing:0, steps:8, stepsPerBeat:2, metronome:true,
+  { id:'first-kick', title:'First Kick', lesson:{name:'The kick', idea:'The low BOOM that tells everyone where the beat is.'}, kind:'brief', bpm:92, swing:0, steps:8, stepsPerBeat:2, metronome:true,
     lanes:['kick'],
     intro:'Every beat starts with a <b>kick</b>. Tap the first column (<b>beat 1</b>) to place one. The loop is already playing, so you\'ll hear it straight away.',
     initial:{}, solution:{kick:[0,4]},
@@ -411,7 +523,7 @@ const LEVELS = [
     hint:'Columns are time, left to right. Each beat is two columns: beat 1 is column 1, beat 3 is column 5.',
     unlocks:['lane:snare'] },
 
-  { id:'backbeat', title:'The Backbeat', kind:'brief', bpm:92, swing:0, steps:8, stepsPerBeat:2, metronome:true,
+  { id:'backbeat', title:'The Backbeat', lesson:{name:'The backbeat', idea:'A snare on beats 2 and 4 makes heads nod.'}, kind:'brief', bpm:92, swing:0, steps:8, stepsPerBeat:2, metronome:true,
     lanes:['kick','snare'], locked:['kick'],
     intro:'The kick is done for you (locked 🔒). Add a <b>snare</b> on <b>beats 2 and 4</b>. That\'s the "backbeat": the snap that makes heads nod.',
     initial:{kick:[0,4]}, solution:{kick:[0,4], snare:[2,6]},
@@ -423,7 +535,7 @@ const LEVELS = [
     hint:'Beat 2 is column 3 and beat 4 is column 7. They fall between the kicks.',
     unlocks:[] },
 
-  { id:'echo', title:'Echo', kind:'ghost', bpm:96, swing:0, steps:8, stepsPerBeat:2, metronome:true,
+  { id:'echo', title:'Echo', lesson:{name:'Copy by ear', idea:'Producers copy beats they hear. Count along: 1 and 2 and…'}, kind:'ghost', bpm:96, swing:0, steps:8, stepsPerBeat:2, metronome:true,
     lanes:['kick'],
     intro:'A hidden kick pattern of <b>4 kicks</b>. Press <b>🎧 Hear target</b>, then copy it by ear. Press <b>Check</b> to see how close you are.',
     initial:{}, target:{kick:[0,3,4,6]},
@@ -432,7 +544,7 @@ const LEVELS = [
     hint:'It starts on beat 1. Count "1 and 2 and 3 and 4 and" out loud along with it: each word is one column.',
     unlocks:['lane:hat'] },
 
-  { id:'four-floor', title:'Four on the Floor', kind:'brief', bpm:118, swing:0, steps:16, stepsPerBeat:4,
+  { id:'four-floor', title:'Four on the Floor', lesson:{name:'Steps and the "and"', idea:'Each beat splits into 4 steps; the "and" is the halfway point.'}, kind:'brief', bpm:118, swing:0, steps:16, stepsPerBeat:4,
     lanes:['kick','snare','hat'],
     intro:'Now 16 steps: <b>4 steps per beat</b>. Brief: <b>kick on every beat</b>, snare on 2 and 4, and hats on every "and" (halfway between beats). Classic dance groove.',
     initial:{}, solution:{kick:[0,4,8,12], snare:[4,12], hat:[2,6,10,14]},
@@ -447,7 +559,7 @@ const LEVELS = [
     hint:'The thick lines mark beats. Beats are columns 1, 5, 9 and 13. Each "and" is two columns after a beat.',
     unlocks:['tool:move'] },
 
-  { id:'clumsy', title:'Clumsy Drummer', kind:'fix', bpm:96, swing:0, steps:16, stepsPerBeat:4,
+  { id:'clumsy', title:'Clumsy Drummer', lesson:{name:'Flams', idea:'Two hits side by side sound like a stumble. One clean hit is stronger.'}, kind:'fix', bpm:96, swing:0, steps:16, stepsPerBeat:4,
     lanes:['kick','snare','hat'],
     intro:'Our drummer had a rough night: <b>double hits</b>, a <b>missing snare</b> and hats that never stop. Fix it in <b>7 moves</b>. The new <b>Move</b> tool shifts a note in one move.',
     initial:{kick:[0,7,8], snare:[4,5], hat:ALL16},
@@ -463,7 +575,7 @@ const LEVELS = [
     hint:'The snare on step 6 is one step late: move it to beat 4 (step 13). For the hats, one gap every 5 steps is enough.',
     unlocks:['sandbox','lane:ohat','swing'] },
 
-  { id:'hat-hole', title:'Hole in the Hats', kind:'fill', bpm:100, swing:0.15, steps:16, stepsPerBeat:4,
+  { id:'hat-hole', title:'Hole in the Hats', lesson:{name:'Swing and the open hat', idea:'Swing pushes every second step late; an open hat rings longer.'}, kind:'fill', bpm:100, swing:0.15, steps:16, stepsPerBeat:4,
     lanes:['kick','snare','hat','ohat'],
     intro:'<b>Swing</b> is on: every second step leans a little late, which makes it bounce. Add <b>exactly 3 notes</b> to finish this loop. Meet the <b>open hat</b>: a hi-hat left ringing.',
     initial:{kick:[0], snare:[4,12], hat:[0,2,4,6,8,10,12]},
@@ -481,7 +593,7 @@ const LEVELS = [
     hint:'There\'s one gap in the hats at the end of the bar: perfect for an open hat. One kick goes on beat 3 and one goes between beats.',
     unlocks:['lane:perc'] },
 
-  { id:'bap-ghost', title:'Boom-Bap Ghost', kind:'ghost', bpm:88, swing:0.2, steps:16, stepsPerBeat:4,
+  { id:'bap-ghost', title:'Boom-Bap Ghost', lesson:{name:'Syncopation', idea:'Kicks between the beats give a groove its bounce.'}, kind:'ghost', bpm:88, swing:0.2, steps:16, stepsPerBeat:4,
     lanes:['kick','snare','hat'], locked:['hat'],
     intro:'Hats are done. Listen to the target and rebuild the <b>kick and snare</b>. Hints and extra Checks cost your third star.',
     initial:{hat:EIGHTHS16}, target:{kick:[0,6,10], snare:[4,12], hat:EIGHTHS16},
@@ -490,7 +602,7 @@ const LEVELS = [
     hint:'The snare is the classic backbeat. There are 3 kicks: one on beat 1, and two land on "and"s (in line with a hat).',
     unlocks:[] },
 
-  { id:'avalanche', title:'Hat Avalanche', kind:'remove', bpm:100, swing:0, steps:16, stepsPerBeat:4,
+  { id:'avalanche', title:'Hat Avalanche', lesson:{name:'Space', idea:'Silence is part of the beat. Fewer notes can hit harder.'}, kind:'remove', bpm:100, swing:0, steps:16, stepsPerBeat:4,
     lanes:['kick','snare','hat','ohat','perc'],
     intro:'Way too much going on. <b>Delete notes</b> (tap them) until it breathes. You can\'t add anything here: space is the instrument.',
     initial:{kick:EIGHTHS16, snare:[4,6,12,14], hat:ALL16, ohat:[2,6,10,14], perc:[3,7,11,15]},
@@ -509,7 +621,7 @@ const LEVELS = [
     hint:'Start with the snares off the backbeat, then any kick on a snare. Open hats need their closed hats gone.',
     unlocks:['lane:bass'] },
 
-  { id:'meet-bass', title:'Meet the Bass', kind:'brief', bpm:100, swing:0, steps:16, stepsPerBeat:4,
+  { id:'meet-bass', title:'Meet the Bass', lesson:{name:'Kick + bass', idea:'Bass notes that start with a kick punch together.'}, kind:'brief', bpm:100, swing:0, steps:16, stepsPerBeat:4,
     lanes:['kick','snare','hat','bass'], locked:['kick','snare','hat'],
     intro:'The <b>bass</b> lane has rows for pitch: higher rows, higher notes. Every row is in key. Rule of thumb: <b>start bass notes with the kick</b> so they punch together.',
     initial:{kick:[0,6,10], snare:[4,12], hat:EIGHTHS16},
@@ -524,7 +636,7 @@ const LEVELS = [
     hint:'Kicks are on steps 1, 7 and 11. Put a bass note under each; make one of them a higher row.',
     unlocks:[] },
 
-  { id:'kick-vs-bass', title:'Kick vs Bass', kind:'fix', bpm:104, swing:0, steps:16, stepsPerBeat:4,
+  { id:'kick-vs-bass', title:'Kick vs Bass', lesson:{name:'Tight timing', idea:'A note one step late smears the punch. Line it up.'}, kind:'fix', bpm:104, swing:0, steps:16, stepsPerBeat:4,
     lanes:['kick','snare','hat','bass'], locked:['kick','snare','hat'],
     intro:'The bass player is rushing: notes land <b>just after</b> the kick, so they smear. Line the bass up with the kicks. <b>5 moves</b>.',
     initial:{kick:[0,6,10], snare:[4,12], hat:EIGHTHS16, bass:[{s:1,p:0},{s:7,p:0},{s:10,p:3},{s:11,p:2}]},
@@ -539,7 +651,7 @@ const LEVELS = [
     hint:'Use Move: slide the two early notes one step left. One note has no kick to land on at all.',
     unlocks:['tool:resize'] },
 
-  { id:'hold-note', title:'Hold That Note', kind:'brief', bpm:96, swing:0, steps:16, stepsPerBeat:4,
+  { id:'hold-note', title:'Hold That Note', lesson:{name:'Note length', idea:'Long notes fill space without adding more hits.'}, kind:'brief', bpm:96, swing:0, steps:16, stepsPerBeat:4,
     lanes:['kick','snare','hat','bass'], locked:['kick','snare','hat'],
     intro:'New <b>Resize</b> tool: drag a bass note sideways to hold it longer. Long notes fill space without adding more hits.',
     initial:{kick:[0,8,11], snare:[4,12], hat:EIGHTHS16, bass:[{s:0,p:0}]},
@@ -556,7 +668,7 @@ const LEVELS = [
     hint:'Hold the first note exactly 4 steps (up to the snare, not over it). Then add notes under the kicks on steps 9 and 12.',
     unlocks:[] },
 
-  { id:'two-bar-bass', title:'Two-Bar Bassline', kind:'ghost', bpm:96, swing:0, steps:32, stepsPerBeat:4,
+  { id:'two-bar-bass', title:'Two-Bar Bassline', lesson:{name:'Basslines by ear', idea:'Hear when the notes go up; most basslines stay near home.'}, kind:'ghost', bpm:96, swing:0, steps:32, stepsPerBeat:4,
     lanes:['kick','snare','hat','bass'], locked:['kick','snare','hat'],
     intro:'Two bars now (32 steps). Rebuild the hidden <b>bassline</b>, notes and all. Check tells you when a note is at the right time but the wrong pitch.',
     initial:{kick:[0,6,10,16,22,26], snare:[4,12,20,28], hat:EIGHTHS32},
@@ -567,7 +679,7 @@ const LEVELS = [
     hint:'Every bass note lands on a kick. Most are the home note. Only the third note of each bar goes up.',
     unlocks:['tool:velocity','lane:clap'] },
 
-  { id:'boom-bap', title:'Boom-Bap Brief', kind:'brief', bpm:90, swing:0.25, steps:16, stepsPerBeat:4,
+  { id:'boom-bap', title:'Boom-Bap Brief', lesson:{name:'Velocity', idea:'How hard a note hits. Loud and soft hits make it feel human.'}, kind:'brief', bpm:90, swing:0.25, steps:16, stepsPerBeat:4,
     lanes:['kick','snare','hat'],
     intro:'Brief: <i>"90 BPM boom-bap: kick on 1 and the \'and\' of 2, snare on 2 and 4, hats sparse."</i> New <b>Velocity</b> tool: tap a note to make it soft or loud.',
     initial:{}, solution:{kick:[0,6,10], snare:[{s:4,v:3},{s:12,v:3}], hat:[0,4,8,12]},
@@ -583,7 +695,7 @@ const LEVELS = [
     hint:'"The and of 2" is step 7. Make the snares loud with Velocity (tap twice: medium → loud). A third kick on the "and" of 3 adds swagger.',
     unlocks:[] },
 
-  { id:'house', title:'House Brief', kind:'brief', bpm:124, swing:0, steps:16, stepsPerBeat:4,
+  { id:'house', title:'House Brief', lesson:{name:'Off-beat bass', idea:'House bass bounces in the gaps between the kicks.'}, kind:'brief', bpm:124, swing:0, steps:16, stepsPerBeat:4,
     lanes:['kick','clap','hat','ohat','bass'],
     intro:'Brief: <i>"124 BPM house: four-on-the-floor kick, clap on 2 and 4, open hats on the off-beats, bass that bounces between the kicks."</i>',
     initial:{}, solution:{kick:[0,4,8,12], clap:[4,12], ohat:[2,6,10,14],
@@ -602,7 +714,7 @@ const LEVELS = [
     hint:'Bass on the same steps as the open hats works great. Soft closed hats just before each beat add shuffle.',
     unlocks:[] },
 
-  { id:'trap', title:'Trap Brief', kind:'brief', bpm:140, swing:0, steps:16, stepsPerBeat:4, backbeat:[8],
+  { id:'trap', title:'Trap Brief', lesson:{name:'Half-time and rolls', idea:'One big snare on beat 3, plus fast hi-hat rolls.'}, kind:'brief', bpm:140, swing:0, steps:16, stepsPerBeat:4, backbeat:[8],
     lanes:['kick','snare','hat','perc','bass'],
     intro:'Brief: <i>"140 BPM trap: half-time feel, one big snare on beat 3, rolling hats, kick and 808 bass locked together."</i>',
     initial:{}, solution:{kick:[0,6,10], snare:[8], hat:[0,2,4,6,8,10,12,{s:13,v:1},14,{s:15,v:1}], perc:[3,11],
@@ -621,7 +733,7 @@ const LEVELS = [
     hint:'Hats on every "and", then fill the last beat solid for the roll. Kicks on "and"s count as between the beats.',
     unlocks:[] },
 
-  { id:'dnb', title:'DnB Two-Step', kind:'brief', bpm:172, swing:0, steps:16, stepsPerBeat:4,
+  { id:'dnb', title:'DnB Two-Step', lesson:{name:'Ghost notes', idea:'Soft snares between the big ones keep fast beats rolling.'}, kind:'brief', bpm:172, swing:0, steps:16, stepsPerBeat:4,
     lanes:['kick','snare','hat'],
     intro:'Brief: <i>"172 BPM drum & bass two-step: kick on 1 and the \'and\' of 3, snare on 2 and 4, steady 8th-note hats."</i> Fast!',
     initial:{}, solution:{kick:[0,10], snare:[4,12,{s:7,v:1}], hat:EIGHTHS16},
@@ -636,7 +748,7 @@ const LEVELS = [
     hint:'"The and of 3" is step 11. For the bonus, add a soft snare somewhere quiet and set it soft with Velocity.',
     unlocks:[] },
 
-  { id:'lofi-fill', title:'Lo-fi Fill', kind:'fill', bpm:78, swing:0.3, steps:32, stepsPerBeat:4,
+  { id:'lofi-fill', title:'Lo-fi Fill', lesson:{name:'Fills', idea:'A short burst at the end of a loop that leads back to the start.'}, kind:'fill', bpm:78, swing:0.3, steps:32, stepsPerBeat:4,
     lanes:['kick','snare','hat','perc'],
     intro:'A sleepy lo-fi loop that just… stops. Write a <b>fill</b> in the very last beat: a short burst that leads back to the top. At most <b>4 notes</b>.',
     initial:{kick:[0,6,10,16,22], snare:[4,12,20], hat:EIGHTHS32.filter(s=>s<28)},
@@ -651,7 +763,7 @@ const LEVELS = [
     hint:'Alternate snare and perc so no two snares touch. Start soft, end loud.',
     unlocks:['lane:lead'] },
 
-  { id:'boss', title:'Boss: The Remix', kind:'fix', bpm:100, swing:0.1, steps:32, stepsPerBeat:4,
+  { id:'boss', title:'Boss: The Remix', lesson:{name:'Putting it together', idea:'Every rule you know, in one loop. Fix it like a pro.'}, kind:'fix', bpm:100, swing:0.1, steps:32, stepsPerBeat:4,
     lanes:['lead','kick','snare','hat','ohat','bass'],
     intro:'<b>Boss level.</b> A client\'s 2-bar loop with every problem at once: flams, a missing snare, choking hats, a lazy bass and a lead that never answers. <b>10 moves.</b>',
     initial:{lead:[{s:0,p:2},{s:8,p:3}], kick:[0,1,10,16,26,27], snare:[4,12,20],
@@ -686,7 +798,7 @@ const S = {
   tool:'draw', cursor:{row:0, step:0}, showCursor:false, selected:null, drag:null,
   mute:new Set(), solo:new Set(), wasPassing:false, evalRes:null, grooveRes:null, stars:0,
   playStep:-1, playStepTime:0, playStepDur:0.1, playSource:'player', pulse:0, particles:[], flash:new Map(),
-  colFlash:new Map(), verify:[],
+  colFlash:new Map(), born:new Map(), verify:[],
   save:{ stars:{}, settings:{ reducedMotion:null, metronome:true }, sandbox:null },
 };
 const STORE_KEY = 'groove-puzzles-v1';
@@ -1325,7 +1437,7 @@ function layoutGrid(){
   const phone = isPhone(), narrow = window.innerWidth < 600;
   G.dpr = Math.min(window.devicePixelRatio || 1, 2);
   // phones get tall rows: the step columns are narrow, so height makes the tap target
-  const drumH = phone ? (narrow ? 46 : 40) : 38, pitchH = phone ? (narrow ? 30 : 26) : 24;
+  const drumH = phone ? (narrow ? 46 : 40) : 50, pitchH = phone ? (narrow ? 30 : 26) : 28;
   G.rows = []; let y = G.ruler;
   for (const lane of L.lanes){
     const lp = LANES[lane];
@@ -1346,34 +1458,91 @@ function roundRect(x, y, w, h, r){
   g2.beginPath(); g2.moveTo(x+r, y); g2.arcTo(x+w, y, x+w, y+h, r); g2.arcTo(x+w, y+h, x, y+h, r);
   g2.arcTo(x, y+h, x, y, r); g2.arcTo(x, y, x+w, y, r); g2.closePath();
 }
+/** Board palette (Aero daylight). Kept here so the canvas matches the CSS tokens. */
+const BOARD = {
+  bgTop:'#ffffff', bgBottom:'#eef8ff', beatShade:'rgba(22,136,220,0.05)',
+  laneEdge:'#b9d9ee', rowEdge:'#e3eff8', bar:'#3b8fd0', beat:'#a9cfe8', step:'#e6f1f9',
+  rulerTop:'#f6fcff', rulerBottom:'#d3ebfb', rulerBar:INK, rulerBeat:'#4a7090', rulerAnd:'#9bbad0',
+  playhead:'#19b3ef', playheadTarget:'#ff9a1f', ink:INK,
+};
+/** Mix two hex colours: t=0 gives a, t=1 gives b. */
+function mix(a, b, t){
+  const p = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+  const A = p(a), B = p(b);
+  return `rgb(${A.map((v,i) => Math.round(v + (B[i]-v)*t)).join(',')})`;
+}
+const easeOutBack = t => { const c = 1.9; return 1 + (c+1)*Math.pow(t-1, 3) + c*Math.pow(t-1, 2); };
+function rrPath(g, x, y, w, h, r){
+  g.beginPath(); g.moveTo(x+r, y); g.arcTo(x+w, y, x+w, y+h, r); g.arcTo(x+w, y+h, x, y+h, r);
+  g.arcTo(x, y+h, x, y, r); g.arcTo(x, y, x+w, y, r); g.closePath();
+}
+/** Paint one glossy "jelly" pad: lane-colour gradient, white shine on the top half, darker rim, soft shadow. */
+function paintJelly(g, x, y, w, h, color, o){
+  const r = Math.min(9, h/2, w/2);
+  g.save();
+  g.shadowColor = 'rgba(0,60,120,0.30)'; g.shadowBlur = 5; g.shadowOffsetY = 2;
+  rrPath(g, x, y, w, h, r);
+  const body = g.createLinearGradient(0, y, 0, y + h);
+  body.addColorStop(0, mix(color, '#ffffff', 0.42)); body.addColorStop(0.5, color); body.addColorStop(1, mix(color, '#000000', 0.16));
+  g.fillStyle = body; g.fill();
+  g.shadowColor = 'transparent'; g.shadowBlur = 0; g.shadowOffsetY = 0;
+  g.lineWidth = o.loud ? 2 : 1; g.strokeStyle = o.loud ? INK : mix(color, '#000000', 0.32);
+  if (o.soft){ g.setLineDash([3,2]); g.strokeStyle = INK; }
+  g.stroke(); g.setLineDash([]);
+  if (h > 8){
+    rrPath(g, x + 2, y + 1.5, w - 4, h*0.46, Math.max(1, r - 2));
+    const sh = g.createLinearGradient(0, y, 0, y + h*0.5);
+    sh.addColorStop(0, 'rgba(255,255,255,0.9)'); sh.addColorStop(1, 'rgba(255,255,255,0.12)');
+    g.fillStyle = sh; g.fill();
+  }
+  g.restore();
+}
+/** Sprite cache: each (colour, size, loudness) pad is painted once, then blitted every frame. */
+const jellyCache = new Map(), JELLY_MARGIN = 6;
+function jelly(x, y, w, h, color, o, scale){
+  const dpr = G.dpr, m = JELLY_MARGIN, k = `${color}|${w.toFixed(1)}|${h.toFixed(1)}|${o.soft ? 1 : 0}${o.loud ? 1 : 0}|${dpr}`;
+  let sp = jellyCache.get(k);
+  if (!sp){
+    if (jellyCache.size > 300) jellyCache.clear();
+    sp = document.createElement('canvas');
+    sp.width = Math.ceil((w + m*2)*dpr); sp.height = Math.ceil((h + m*2)*dpr);
+    const g = sp.getContext('2d'); g.scale(dpr, dpr); paintJelly(g, m, m, w, h, color, o);
+    jellyCache.set(k, sp);
+  }
+  const sc = scale || 1, cx = x + w/2, cy = y + h/2, W = (w + m*2)*sc, H = (h + m*2)*sc;
+  g2.save(); g2.globalAlpha = o.alpha == null ? 1 : o.alpha;
+  g2.drawImage(sp, cx - W/2, cy - H/2, W, H);
+  if (o.glow > 0){ rrPath(g2, cx - w*sc/2, cy - h*sc/2, w*sc, h*sc, Math.min(9, h/2, w/2)*sc); g2.fillStyle = `rgba(255,255,255,${0.55*o.glow})`; g2.fill(); }
+  g2.restore();
+  return {x: cx - w*sc/2, y: cy - h*sc/2, w: w*sc, h: h*sc};
+}
 function drawNote(n, opts){
   const r = rowY(n.lane, LANES[n.lane].pitched ? n.pitch : 0); if (!r) return;
   const lp = LANES[n.lane], cw = G.cw, now = performance.now(), rm = reducedMotion();
-  const fl = S.flash.get(key(n)), k = fl ? Math.max(0, 1 - (now - fl)/240) : 0;
-  const pad = 3, x = n.step*cw + pad, w = n.len*cw - pad*2;
-  let h = r.h - pad*2, y = r.y + pad;
-  if (!lp.pitched){ const hf = [0, 0.48, 0.72, 0.95][n.vel]; const nh = (r.h - pad*2)*hf; y = r.y + (r.h - nh)/2; h = nh; }
-  const dim = !audible(n.lane) ? 0.3 : 1;
-  const alpha = [0, 0.55, 0.85, 1][n.vel] * dim;
-  g2.save();
-  if (k > 0 && !rm){ g2.shadowColor = lp.color; g2.shadowBlur = 22*k; }
-  const grow = rm ? 0 : 2*k;
-  roundRect(x - grow, y - grow, w + grow*2, h + grow*2, 5);
-  g2.fillStyle = hexA(lp.color, Math.min(1, alpha + 0.3*k)); g2.fill();
-  g2.shadowBlur = 0;
-  if (k > 0){ g2.fillStyle = `rgba(255,255,255,${0.45*k})`; g2.fill(); }
-  if (n.vel === 3){ g2.fillStyle = 'rgba(255,255,255,0.75)'; g2.fillRect(x+3, y+2, w-6, 2); }   // loud marker (not colour only)
-  if (n.vel === 1){ g2.strokeStyle = 'rgba(255,255,255,0.6)'; g2.setLineDash([3,3]); g2.lineWidth = 1; roundRect(x+.5, y+.5, w-1, h-1, 5); g2.stroke(); g2.setLineDash([]); }
-  if (opts && opts.pinned){ g2.fillStyle = 'rgba(10,12,30,0.75)'; g2.beginPath(); g2.arc(x + 6, y + 6, 2.6, 0, Math.PI*2); g2.fill(); }
-  if (opts && opts.selected){ g2.strokeStyle = '#fff'; g2.lineWidth = 2; roundRect(x-1, y-1, w+2, h+2, 6); g2.stroke(); }
-  if (lp.pitched && n.len > 1 && S.tool === 'resize'){ g2.fillStyle = 'rgba(255,255,255,.55)'; g2.fillRect(x + w - 4, y + 4, 2, h - 8); }
-  g2.restore();
+  const k = key(n), fl = S.flash.get(k), glow = fl ? Math.max(0, 1 - (now - fl)/260) : 0;
+  const pad = 3;
+  let x = n.step*cw + pad, w = n.len*cw - pad*2, h = r.h - pad*2, y = r.y + pad;
+  if (!lp.pitched){ const hf = [0, 0.5, 0.74, 0.96][n.vel]; const nh = (r.h - pad*2)*hf; y = r.y + (r.h - nh)/2; h = nh; }
+  // pop-in when placed, and a bounce when the playhead hits it
+  let sc = 1;
+  const born = S.born.get(k);
+  if (!rm && born && now - born < 260) sc = Math.max(0.2, easeOutBack((now - born)/260));
+  if (!rm && glow > 0) sc *= 1 + 0.1*glow;
+  const dim = !audible(n.lane) ? 0.35 : 1;
+  ({x, y, w, h} = jelly(x, y, w, h, lp.color, {alpha: (n.vel === 1 ? 0.6 : 1)*dim, soft: n.vel === 1, loud: n.vel === 3, glow}, sc));
+  if (opts && opts.pinned){   // notes that came with the loop: a small white rivet
+    g2.fillStyle = '#fff'; g2.strokeStyle = INK; g2.lineWidth = 1.2;
+    g2.beginPath(); g2.arc(x + 6.5, y + h - 6.5, 2.6, 0, Math.PI*2); g2.fill(); g2.stroke();
+  }
+  if (opts && opts.selected){ g2.strokeStyle = INK; g2.lineWidth = 2.5; roundRect(x-2, y-2, w+4, h+4, 10); g2.stroke(); }
+  if (lp.pitched && n.len > 1 && S.tool === 'resize'){ g2.fillStyle = 'rgba(255,255,255,.95)'; g2.fillRect(x + w - 5, y + 4, 2, h - 8); }
 }
+/** Particles are bubbles: lane-tinted, a white highlight, drifting upward. */
 function spawnParticles(x, y, color, count, spread){
   if (reducedMotion()) return;
-  for (let i = 0; i < count && S.particles.length < 260; i++){
-    const a = Math.random()*Math.PI*2, sp = (0.4 + Math.random())*(spread||1.4);
-    S.particles.push({x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - 0.6, life:1, color, size:1.5 + Math.random()*2});
+  for (let i = 0; i < count && S.particles.length < 90; i++){
+    const a = -Math.PI/2 + (Math.random() - 0.5)*1.6, sp = (0.5 + Math.random())*(spread || 1.2);
+    S.particles.push({x, y, vx: Math.cos(a)*sp*0.6, vy: Math.sin(a)*sp, life: 1, color, r: 2.5 + Math.random()*4.5, wob: Math.random()*6});
   }
 }
 function onStepVisual(ev){
@@ -1382,114 +1551,114 @@ function onStepVisual(ev){
   if (ev.step % L.stepsPerBeat === 0){
     S.pulse = ev.step % (L.stepsPerBeat*4) === 0 ? 1 : 0.6;
     const led = document.getElementById('beat-led');
-    led.style.background = ev.step === 0 ? '#ff5d73' : '#8c6cff';
-    setTimeout(() => { led.style.background = ''; }, 90);
+    led.style.background = ev.step === 0 ? 'radial-gradient(circle at 50% 30%,#d4fbb3,#3fa513)' : 'radial-gradient(circle at 50% 30%,#b6ecff,#0a8fd8)';
+    setTimeout(() => { led.style.background = ''; }, 100);
   }
   if (ev.source === 'target'){ S.colFlash.set(ev.step, now); return; }
   for (const n of S.notes) if (n.step === ev.step && audible(n.lane)){
     S.flash.set(key(n), now);
     const r = rowY(n.lane, LANES[n.lane].pitched ? n.pitch : 0);
-    if (r) spawnParticles(n.step*G.cw + G.cw/2, r.y + r.h/2, LANES[n.lane].color, n.vel + 1);
+    if (r && (n.vel === 3 || Math.random() < 0.6)) spawnParticles(n.step*G.cw + G.cw/2, r.y + r.h/2, LANES[n.lane].color, n.vel === 3 ? 2 : 1);
   }
 }
 function drawGrid(){
   const L = S.L; if (!L) return;
-  const cw = G.cw, W = G.w, H = G.h, R = G.ruler, spb = L.stepsPerBeat, rm = reducedMotion();
+  const cw = G.cw, W = G.w, H = G.h, R = G.ruler, spb = L.stepsPerBeat, rm = reducedMotion(), B = BOARD;
   const now = performance.now();
   g2.setTransform(G.dpr, 0, 0, G.dpr, 0, 0);
-  g2.fillStyle = '#0d1022'; g2.fillRect(0, 0, W, H);
-  // beat shading
-  for (let s = 0; s < L.steps; s++) if (Math.floor(s/spb) % 2 === 1){ g2.fillStyle = 'rgba(255,255,255,0.028)'; g2.fillRect(s*cw, R, cw, H-R); }
-  if (!rm && S.pulse > 0.01){ g2.fillStyle = `rgba(140,108,255,${0.09*S.pulse})`; g2.fillRect(0, R, W, H-R); }
-  // rows
+  const bg = g2.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, B.bgTop); bg.addColorStop(1, B.bgBottom);
+  g2.fillStyle = bg; g2.fillRect(0, 0, W, H);
+  for (let s = 0; s < L.steps; s++) if (Math.floor(s/spb) % 2 === 1){ g2.fillStyle = B.beatShade; g2.fillRect(s*cw, R, cw, H-R); }
+  if (!rm && S.pulse > 0.01){ g2.fillStyle = `rgba(25,179,239,${0.07*S.pulse})`; g2.fillRect(0, R, W, H-R); }
+  // rows: lane tint, home-note rows a little stronger, hatching for muted lanes
   let prevLane = null;
   for (const r of G.rows){
     const lp = LANES[r.lane];
-    g2.fillStyle = hexA(lp.color, lp.pitched && r.pitch % 5 === 0 ? 0.09 : 0.04); g2.fillRect(0, r.y, W, r.h);
-    if (!audible(r.lane)){ // hatch muted lanes: visible without colour
-      g2.save(); g2.beginPath(); g2.rect(0, r.y, W, r.h); g2.clip(); g2.strokeStyle = 'rgba(255,255,255,0.06)'; g2.lineWidth = 1;
+    g2.fillStyle = hexA(lp.color, lp.pitched && r.pitch % 5 === 0 ? 0.13 : 0.06); g2.fillRect(0, r.y, W, r.h);
+    if (!audible(r.lane)){
+      g2.save(); g2.beginPath(); g2.rect(0, r.y, W, r.h); g2.clip(); g2.strokeStyle = 'rgba(11,53,86,0.10)'; g2.lineWidth = 1;
       for (let x = -r.h; x < W; x += 10){ g2.beginPath(); g2.moveTo(x, r.y + r.h); g2.lineTo(x + r.h, r.y); g2.stroke(); }
       g2.restore();
     }
-    if (S.L.locked.includes(r.lane)){ g2.fillStyle = 'rgba(0,0,0,0.18)'; g2.fillRect(0, r.y, W, r.h); }
-    g2.fillStyle = r.lane !== prevLane ? '#2e3664' : '#1d2345';
-    g2.fillRect(0, r.y, W, 1); prevLane = r.lane;
+    if (L.locked.includes(r.lane)){ g2.fillStyle = 'rgba(11,53,86,0.035)'; g2.fillRect(0, r.y, W, r.h); }
+    g2.fillStyle = r.lane !== prevLane ? B.laneEdge : B.rowEdge; g2.fillRect(0, r.y, W, 1); prevLane = r.lane;
   }
-  // column lines
   for (let s = 0; s <= L.steps; s++){
     const bar = s % (spb*4) === 0, beat = s % spb === 0;
-    g2.fillStyle = bar ? '#4a5590' : beat ? '#2e3664' : '#1a2042';
+    g2.fillStyle = bar ? B.bar : beat ? B.beat : B.step;
     g2.fillRect(s*cw - (bar ? 1 : 0), R, bar ? 2 : 1, H - R);
   }
-  // ruler
-  g2.fillStyle = '#121633'; g2.fillRect(0, 0, W, R);
-  g2.font = '600 11px ui-monospace,Menlo,Consolas,monospace'; g2.textBaseline = 'middle';
+  // glossy ruler
+  const rg = g2.createLinearGradient(0, 0, 0, R); rg.addColorStop(0, B.rulerTop); rg.addColorStop(1, B.rulerBottom);
+  g2.fillStyle = rg; g2.fillRect(0, 0, W, R);
+  g2.fillStyle = 'rgba(255,255,255,0.8)'; g2.fillRect(0, 0, W, R*0.45);
+  g2.fillStyle = B.laneEdge; g2.fillRect(0, R - 1, W, 1);
+  g2.font = '900 12px Nunito, ui-rounded, system-ui, sans-serif'; g2.textBaseline = 'middle';
   for (let s = 0; s < L.steps; s++){
     const beatIn = Math.floor((s % (spb*4))/spb) + 1, bar = Math.floor(s/(spb*4)) + 1;
     if (s % spb === 0){
-      g2.fillStyle = s % (spb*4) === 0 ? '#e9ecff' : '#9aa3c7';
-      const label = L.bars > 1 && s % (spb*4) === 0 ? `${bar}.${beatIn}` : `${beatIn}`;
-      g2.fillText(label, s*cw + 4, R/2);
-    } else if (cw >= 26 && s % spb === spb/2){ g2.fillStyle = '#5a6290'; g2.fillText('&', s*cw + 4, R/2); }
+      g2.fillStyle = s % (spb*4) === 0 ? B.rulerBar : B.rulerBeat;
+      g2.fillText(L.bars > 1 && s % (spb*4) === 0 ? `${bar}.${beatIn}` : `${beatIn}`, s*cw + 5, R/2 + 1);
+    } else if (cw >= 26 && s % spb === spb/2){ g2.fillStyle = B.rulerAnd; g2.fillText('&', s*cw + 5, R/2 + 1); }
   }
-  // target column flashes while listening
   if (Seq.playing && S.playSource === 'target'){
-    for (const [s, t] of S.colFlash){ const k = 1 - (now - t)/260; if (k <= 0){ S.colFlash.delete(s); continue; }
-      g2.fillStyle = `rgba(255,255,255,${0.12*k})`; g2.fillRect(s*cw, R, cw, H-R); }
+    for (const [s, t] of S.colFlash){ const k = 1 - (now - t)/280; if (k <= 0){ S.colFlash.delete(s); continue; }
+      g2.fillStyle = `rgba(255,154,31,${0.18*k})`; g2.fillRect(s*cw, R, cw, H-R); }
   }
-  // hint-revealed target notes (dashed ghosts)
+  // hint-revealed target notes: dashed outline with "?"
   for (const k of S.revealed){
     const n = L.targetNotes.find(t => key(t) === k); if (!n) continue;
     const r = rowY(n.lane, LANES[n.lane].pitched ? n.pitch : 0); if (!r) continue;
-    g2.save(); g2.setLineDash([4,3]); g2.strokeStyle = hexA(LANES[n.lane].color, 0.9); g2.lineWidth = 1.5;
-    roundRect(n.step*cw + 3, r.y + 3, n.len*cw - 6, r.h - 6, 5); g2.stroke();
-    g2.fillStyle = hexA(LANES[n.lane].color, 0.9); g2.font = '700 12px system-ui'; g2.textAlign = 'center';
+    g2.save(); g2.setLineDash([4,3]); g2.strokeStyle = mix(LANES[n.lane].color, '#000000', 0.25); g2.lineWidth = 2;
+    roundRect(n.step*cw + 3, r.y + 3, n.len*cw - 6, r.h - 6, 8); g2.stroke();
+    g2.fillStyle = INK; g2.font = '900 13px Nunito, system-ui, sans-serif'; g2.textAlign = 'center';
     g2.fillText('?', n.step*cw + cw/2, r.y + r.h/2 + 1); g2.textAlign = 'left'; g2.restore();
   }
-  // notes
   const pinned = !KINDS[L.kind].canRemoveInitial;
   for (const n of S.notes){
     if (S.drag && S.drag.type === 'move' && S.drag.note === n && S.drag.moved) continue;
     drawNote(n, {pinned: (pinned && S.initialKeys.has(key(n))) || L.locked.includes(n.lane), selected: S.selected === key(n)});
   }
-  // drag previews
   if (S.drag && S.drag.type === 'move' && S.drag.moved){
     const d = S.drag, r = G.rows[d.cur.row], n = d.note;
     const ghost = {...n, step:d.cur.step, pitch: LANES[n.lane].pitched && r.lane === n.lane ? r.pitch : n.pitch};
-    g2.globalAlpha = 0.7; drawNote(ghost, {selected:true}); g2.globalAlpha = 1;
+    g2.globalAlpha = 0.75; drawNote(ghost, {selected:true}); g2.globalAlpha = 1;
   }
   if (S.drag && S.drag.type === 'resize'){
     const d = S.drag, n = d.note, len = Math.max(1, d.cur.step - n.step + 1);
-    const r = rowY(n.lane, n.pitch); g2.strokeStyle = '#fff'; g2.setLineDash([4,3]); g2.lineWidth = 1.5;
-    roundRect(n.step*cw + 2, r.y + 2, len*cw - 4, r.h - 4, 5); g2.stroke(); g2.setLineDash([]);
+    const r = rowY(n.lane, n.pitch); g2.strokeStyle = INK; g2.setLineDash([4,3]); g2.lineWidth = 2;
+    roundRect(n.step*cw + 2, r.y + 2, len*cw - 4, r.h - 4, 8); g2.stroke(); g2.setLineDash([]);
   }
-  // listening overlay
   if (Seq.playing && S.playSource === 'target'){
-    g2.fillStyle = 'rgba(10,12,30,0.35)'; g2.fillRect(0, R, W, H-R);
-    g2.fillStyle = '#fff'; g2.font = '700 14px system-ui'; g2.fillText('🎧 Listening to the target…', 10, R + 16);
+    g2.fillStyle = 'rgba(255,255,255,0.62)'; g2.fillRect(0, R, W, H-R);
+    g2.fillStyle = INK; g2.font = '900 15px Nunito, system-ui, sans-serif'; g2.fillText('🎧 Listening to the target…', 12, R + 18);
   }
-  // playhead (interpolated from the audio clock)
+  // playhead: a glowing glass bar
   if (Seq.playing && S.playStep >= 0){
     const frac = Math.min(1, Math.max(0, (AudioEngine.now() - S.playStepTime)/S.playStepDur));
-    const x = (S.playStep + frac)*cw;
-    const col = S.playSource === 'target' ? '#ffffff' : '#4fe3e0';
-    g2.fillStyle = hexA(col === '#ffffff' ? '#ffffff' : '#4fe3e0', 0.08); g2.fillRect(S.playStep*cw, R, cw, H-R);
-    g2.save(); if (!rm){ g2.shadowColor = col; g2.shadowBlur = 10; }
-    g2.fillStyle = col; g2.fillRect(x - 1, 0, 2, H); g2.restore();
+    const x = (S.playStep + frac)*cw, col = S.playSource === 'target' ? B.playheadTarget : B.playhead;
+    g2.fillStyle = hexA(col, 0.12); g2.fillRect(S.playStep*cw, R, cw, H-R);
+    g2.save(); if (!rm){ g2.shadowColor = col; g2.shadowBlur = 12; }
+    g2.fillStyle = col; g2.fillRect(x - 1.5, 0, 3, H); g2.restore();
+    g2.fillStyle = '#fff'; g2.beginPath(); g2.arc(x, R/2, 4, 0, Math.PI*2); g2.fill();
+    g2.strokeStyle = col; g2.lineWidth = 2; g2.stroke();
   }
-  // particles
+  // bubbles
   if (!rm){
     for (let i = S.particles.length - 1; i >= 0; i--){
       const p = S.particles[i];
-      p.x += p.vx; p.y += p.vy; p.vy += 0.04; p.life -= 0.025;
-      if (p.life <= 0){ S.particles.splice(i, 1); continue; }
-      g2.fillStyle = hexA(p.color, p.life); g2.fillRect(p.x, p.y, p.size, p.size);
+      p.wob += 0.15; p.x += p.vx + Math.sin(p.wob)*0.25; p.y += p.vy; p.vy -= 0.01; p.life -= 0.024;
+      if (p.life <= 0 || p.y < -10){ S.particles.splice(i, 1); continue; }
+      g2.beginPath(); g2.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      g2.fillStyle = hexA(p.color, 0.16*p.life); g2.fill();
+      g2.lineWidth = 1.2; g2.strokeStyle = hexA(p.color, 0.65*p.life); g2.stroke();
+      g2.beginPath(); g2.arc(p.x - p.r*0.35, p.y - p.r*0.35, p.r*0.28, 0, Math.PI*2);
+      g2.fillStyle = `rgba(255,255,255,${0.95*p.life})`; g2.fill();
     }
   } else S.particles.length = 0;
-  // keyboard cursor
   if (S.showCursor && document.activeElement === canvas){
     const r = G.rows[S.cursor.row];
-    if (r){ g2.strokeStyle = '#fff'; g2.lineWidth = 2; g2.setLineDash([5,3]);
+    if (r){ g2.strokeStyle = INK; g2.lineWidth = 2; g2.setLineDash([5,3]);
       g2.strokeRect(S.cursor.step*cw + 1.5, r.y + 1.5, cw - 3, r.h - 3); g2.setLineDash([]); }
   }
 }
@@ -1543,7 +1712,7 @@ function opToggle(lane, step, pitch){
   }
   const note = mkNote(lane, step, pitch);
   nn.push(note);
-  if (commit(nn, {type:'add', note})){ AudioEngine.preview(note, Seq.stepDur()); return true; }
+  if (commit(nn, {type:'add', note})){ S.born.set(key(note), performance.now()); AudioEngine.preview(note, Seq.stepDur()); return true; }
   return false;
 }
 function opMove(note, step, pitch){
@@ -1560,7 +1729,7 @@ function opMove(note, step, pitch){
   const nextOnset = next.filter(n => n.lane === note.lane && n.step > step).reduce((m, n) => Math.min(m, n.step), L.steps);
   const moved = {...note, step, pitch, len: Math.max(1, Math.min(note.len, nextOnset - step))};
   next.push(moved);
-  if (commit(next, {type:'move', note:moved})){ S.selected = null; AudioEngine.preview(moved, Seq.stepDur()); return true; }
+  if (commit(next, {type:'move', note:moved})){ S.selected = null; S.born.set(key(moved), performance.now()); AudioEngine.preview(moved, Seq.stepDur()); return true; }
   return false;
 }
 function maxLenFor(note){
@@ -1747,7 +1916,7 @@ function evaluate(){
 function celebrate(){
   if (reducedMotion()) return;
   for (let i = 0; i < 70; i++) spawnParticles(Math.random()*G.w, G.ruler + Math.random()*(G.h - G.ruler),
-    ['#ff5d73','#ffb347','#4fe3e0','#8c6cff','#5dff9a'][i % 5], 1, 3);
+    ['#ff4f6e','#ff9a1f','#14c2d6','#9b5cff','#3fbf3a','#3b82f6'][i % 6], 1, 2.4);
 }
 function saveSandbox(){ const L = S.L; S.save.sandbox = {notes:S.notes, bpm:L.bpm, swing:L.swing, steps:L.steps}; Store.save(); }
 
@@ -1778,32 +1947,50 @@ const UI = {
     tg.innerHTML = '';
     for (let i = 0; i < 64; i++){
       const c = document.createElement('i');
-      if (on.has(i)){ c.className = 'on'; c.style.background = ['#ff5d73','#ffb347','#4fe3e0','#8c6cff'][Math.floor(i/16)]; c.style.animationDelay = ((i % 16)*0.15) + 's'; }
+      if (on.has(i)){ c.className = 'on'; const col = ['#ff4f6e','#ff9a1f','#14c2d6','#3fbf3a'][Math.floor(i/16)];
+        c.style.background = `linear-gradient(180deg, ${mix(col,'#ffffff',0.45)}, ${col} 55%, ${mix(col,'#000000',0.15)})`; c.style.animationDelay = ((i % 16)*0.15) + 's'; }
       tg.appendChild(c);
     }
   },
   levels(){
-    const grid = $('level-grid'); grid.innerHTML = '';
+    const wrap = $('level-grid'); wrap.innerHTML = '';
     const u = unlockedSet(), total = LEVELS.reduce((a, L) => a + (S.save.stars[L.id]||0), 0);
-    $('levels-summary').textContent = `${total} of ${LEVELS.length*3} stars`;
-    const sb = document.createElement('button'); sb.className = 'lvl-card sandbox' + (u.has('sandbox') || S.unlockAll ? '' : ' locked');
-    sb.innerHTML = `<span class="n">FREE PLAY</span><span class="t">Sandbox</span><span class="k">Every lane and tool you've unlocked</span>
-      <span class="s">${u.has('sandbox') || S.unlockAll ? '▶ Open' : '🔒 Clear level 5'}</span>`;
-    sb.disabled = !(u.has('sandbox') || S.unlockAll); sb.onclick = () => openSandbox();
-    grid.appendChild(sb);
-    LEVELS.forEach((L, i) => {
-      const b = document.createElement('button'), st = S.save.stars[L.id]||0, open = levelUnlocked(i);
-      const v = S.verify[i];
-      b.className = 'lvl-card' + (open ? '' : ' locked');
+    $('levels-summary').innerHTML = `<span class="num">★ ${total}</span> of ${LEVELS.length*3} stars`;
+    const sbOpen = u.has('sandbox') || S.unlockAll;
+    const card = (L, i) => {
+      const b = document.createElement('button'), st = S.save.stars[L.id]||0, open = levelUnlocked(i), v = S.verify[i];
+      b.className = 'lvl-card' + (open ? '' : ' locked') + (st ? ' done' : '');
       b.disabled = !open;
-      b.setAttribute('aria-label', `Level ${i+1}, ${L.title}, ${KINDS[L.kind].label}. ${open ? `${st} of 3 stars` : 'Locked'}`);
-      b.innerHTML = `<span class="n">LEVEL ${String(i+1).padStart(2,'0')}</span><span class="t">${esc(L.title)}</span>
+      b.setAttribute('aria-label', `Level ${i+1}, ${L.title}. Learn: ${L.lesson ? L.lesson.name : ''}. ${open ? `${st} of 3 stars` : 'Locked'}`);
+      b.innerHTML = `<span class="orb">${open ? i+1 : '🔒'}</span><span class="t">${esc(L.title)}</span>
+        <span class="learn">Learn: ${esc(L.lesson ? L.lesson.name : '')}</span>
         <span class="k">${KINDS[L.kind].label} · ${L.bpm} BPM</span>
-        <span class="s">${open ? '★'.repeat(st) + '☆'.repeat(3-st) : '🔒 Clear level ' + i}</span>
+        <span class="s">${open ? '★'.repeat(st) + `<span class="no">${'☆'.repeat(3-st)}</span>` : 'Clear level ' + i + ' first'}</span>
         ${v && !v.ok ? '<span class="warn" title="This level failed its solvability check">⚠</span>' : ''}`;
       b.onclick = () => openLevel(i);
-      grid.appendChild(b);
+      return b;
+    };
+    const placed = new Set();
+    CHAPTERS.forEach((ch, ci) => {
+      const idx = ch.levels.map(id => LEVELS.findIndex(L => L.id === id)).filter(i => i >= 0);
+      idx.forEach(i => placed.add(i));
+      const got = idx.reduce((a, i) => a + (S.save.stars[LEVELS[i].id]||0), 0);
+      const sec = document.createElement('section'); sec.className = 'chapter';
+      sec.innerHTML = `<div class="chapter-head"><span class="cn">Chapter ${ci+1}</span><h3>${esc(ch.title)}</h3>
+        <span class="num" style="margin-left:auto;font-weight:900;color:#b77b00">★ ${got}/${idx.length*3}</span><p>${esc(ch.blurb)}</p></div>`;
+      const grid = document.createElement('div'); grid.className = 'level-grid';
+      idx.forEach(i => grid.appendChild(card(LEVELS[i], i)));
+      if (ci === 1){   // the sandbox unlocks inside chapter 2 (after level 5)
+        const sb = document.createElement('button'); sb.className = 'lvl-card sandbox' + (sbOpen ? '' : ' locked'); sb.disabled = !sbOpen;
+        sb.innerHTML = `<span class="orb">✦</span><span class="t">Sandbox</span><span class="learn">Free play</span>
+          <span class="k">Every sound and tool you've unlocked</span><span class="s" style="font-size:15px;letter-spacing:0">${sbOpen ? '▶ Open' : 'Clear level 5 first'}</span>`;
+        sb.onclick = () => openSandbox(); grid.appendChild(sb);
+      }
+      sec.appendChild(grid); wrap.appendChild(sec);
     });
+    // any level not listed in a chapter still shows up (adding a level never needs UI code)
+    const rest = LEVELS.map((L, i) => i).filter(i => !placed.has(i));
+    if (rest.length){ const grid = document.createElement('div'); grid.className = 'level-grid'; rest.forEach(i => grid.appendChild(card(LEVELS[i], i))); wrap.appendChild(grid); }
   },
   laneHeads(){
     const L = S.L, wrap = $('lane-heads'); wrap.innerHTML = '';
@@ -1814,7 +2001,7 @@ const UI = {
       d.className = 'lane-head' + (lp.pitched ? ' pitched' : '') + (audible(lane) ? '' : ' muted');
       d.style.height = h + 'px';
       const locked = L.locked.includes(lane);
-      d.innerHTML = `<button class="nm" title="${esc(lp.desc)} (click to hear it)"><span class="sw" style="background:${lp.color}"></span>${esc(isPhone() ? lp.short : lp.name)}${locked ? ' 🔒' : ''}</button>
+      d.innerHTML = `<button class="nm" title="${esc(lp.desc)} (click to hear it)">${laneIcon(lane)}${esc(isPhone() ? lp.short : lp.name)}${locked ? ' 🔒' : ''}</button>
         <div class="ms"><button aria-pressed="${S.mute.has(lane)}" aria-label="Mute ${esc(lp.name)}" title="Mute">M</button><button aria-pressed="${S.solo.has(lane)}" aria-label="Solo ${esc(lp.name)}" title="Solo: hear only this lane">S</button></div>
         <span class="tag">${S.mute.has(lane) ? 'muted' : S.solo.has(lane) ? 'solo' : !audible(lane) ? 'silent (solo)' : ''}</span>`;
       if (lp.pitched){
@@ -1987,9 +2174,11 @@ const UI = {
     const first = !S.clearedBefore;
     const unl = first && L.unlocks.length ? `<div class="unl">🔓 <b>Unlocked:</b> ${L.unlocks.map(u => esc(UNLOCK_TEXT[u]||u)).join(' · ')}</div>` : '';
     const next = i + 1 < LEVELS.length;
-    UI.modal(`<h2 id="modal-title">${st.stars === 3 ? 'Perfect groove!' : 'Level clear!'}</h2>
-      <div class="stars" aria-label="${st.stars} of 3 stars">${'★'.repeat(st.stars)}${'☆'.repeat(3-st.stars)}</div>
-      <p style="color:var(--dim);margin:0 0 6px">Your best: ${best} of 3 stars.</p>
+    const head = st.stars === 3 ? 'Perfect groove!' : st.stars === 2 ? 'Great job!' : 'Level clear!';
+    const learned = L.lesson ? `<div class="learned"><span class="lt">You learned</span><b>${esc(L.lesson.name)}:</b> ${esc(L.lesson.idea)}</div>` : '';
+    UI.modal(`<h2 id="modal-title">${head}</h2>
+      <div class="stars" aria-label="${st.stars} of 3 stars">${'★'.repeat(st.stars)}<span style="color:#c9dbe8;text-shadow:none">${'☆'.repeat(3-st.stars)}</span></div>
+      <p style="color:var(--ink-soft);margin:0 0 6px">Your best: ${best} of 3 stars.</p>${learned}
       <ul class="crit">${st.crit.map((c, k) => `<li class="${c.ok ? 'ok' : 'no'}" data-mark="${c.ok ? '✓' : '○'}">${'★'.repeat(k+1)} ${esc(c.text)}</li>`).join('')}</ul>
       <div class="groove-total"><b>${gr.total}</b><span>/100 groove quality</span></div>
       <div class="parts">${gr.parts.filter(p => p.applicable).map(p => `<div class="part"><div class="row"><span>${esc(p.name)}</span><span>${Math.round(p.score)}/20</span></div>
@@ -2052,7 +2241,9 @@ function renderPlayScreen(){
   $('lvl-swing').title = 'Swing makes every second step play a little late';
   $('lvl-steps').textContent = `${L.steps} steps · ${L.bars} bar${L.bars > 1 ? 's' : ''}`;
   $('lvl-intro').hidden = sandbox;
-  $('lvl-intro').innerHTML = sandbox ? '' : `<b>${esc(KINDS[L.kind].label)}:</b> ${L.intro}`;
+  $('lvl-intro').innerHTML = sandbox ? '' : `<span class="clamp"><b>${esc(KINDS[L.kind].label)}:</b> ${L.intro}</span>`;
+  $('lvl-lesson').hidden = sandbox || !L.lesson;
+  if (L.lesson){ $('lesson-name').textContent = L.lesson.name; $('lesson-idea').textContent = L.lesson.idea; }
   $('sandbox-bar').hidden = !sandbox;
   $('btn-hint').hidden = sandbox;
   if (sandbox){
@@ -2158,6 +2349,14 @@ function boot(){
   $('sb-clear').onclick = () => { if (S.notes.length) commit([], {type:'redo'}); };
   let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (S.screen === 'play') layoutGrid(); }, 80); });
   UI.titleGrid();
+  // sky bubbles: CSS animates them (transform only); reduced motion hides them
+  const bub = $('bubbles');
+  for (let i = 0; i < 14; i++){
+    const b = document.createElement('i'), size = 10 + Math.random()*36;
+    b.style.cssText = `--x:${(Math.random()*100).toFixed(1)}%;--s:${size.toFixed(0)}px;--d:${(16 + Math.random()*18).toFixed(1)}s;` +
+      `--delay:${(-Math.random()*30).toFixed(1)}s;--drift:${(Math.random()*90 - 45).toFixed(0)}px`;
+    bub.appendChild(b);
+  }
   UI.show('title');
   requestAnimationFrame(frame);
   // test / debug hooks (not part of the player UI)

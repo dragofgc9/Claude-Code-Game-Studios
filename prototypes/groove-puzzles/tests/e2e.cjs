@@ -53,9 +53,9 @@ const out=[]; const ok=(c,m)=>out.push((c?'PASS ':'FAIL ')+m);
   await p.evaluate(()=>GP.openLevel(4));
   const res = await p.evaluate(()=>{ const s=GP.state; let n=0; for(let st=0;st<8;st++){ /* remove hats 0..7 via toggle by clicking API */ } return true; });
   const box5 = await p.locator('#grid').boundingBox(); const cw5 = await p.evaluate(()=>document.getElementById('grid').clientWidth/16);
-  const hatY = await p.evaluate(()=>{ return 24 + 38*2 + 19; });
+  const hatY = await p.evaluate(()=>{ return 24 + 50*2 + 25; });   // desktop drum rows are 50px
   for (let st=0; st<8; st++) await p.mouse.click(box5.x + cw5*st + cw5/2, box5.y + hatY);
-  ok(await p.evaluate(()=>GP.state.undo.length===7), 'fix level stops at the 7-move budget');
+  ok(await p.evaluate(()=>GP.state.undo.length===7 && GP.state.notes.filter(n=>n.lane==='hat').length===9), 'fix level stops at the 7-move budget (7 hats removed, 8th refused)');
   ok(await p.isVisible('.fail-banner'), 'out-of-moves fail banner shows');
   await p.screenshot({path:'shots/fix-out-of-moves.png'});
   // fill L6: pinned initial notes cannot be removed
@@ -74,7 +74,7 @@ const out=[]; const ok=(c,m)=>out.push((c?'PASS ':'FAIL ')+m);
   const geo10 = await p.evaluate(()=>{ const c=document.getElementById('grid'); return {cw:c.clientWidth/16}; });
   const box10 = await p.locator('#grid').boundingBox();
   // bass home row is last row; rows: kick, snare, hat(38 each) then 6 bass rows of 24 -> p0 at y=24+114+5*24
-  const yb = 24 + 38*3 + 5*24 + 12;
+  const yb = 24 + 50*3 + 5*28 + 14;   // ruler + 3 drum rows + bass rows down to the home note
   await p.mouse.move(box10.x + geo10.cw*1.5, box10.y+yb); await p.mouse.down(); await p.mouse.move(box10.x + geo10.cw*0.5, box10.y+yb, {steps:4}); await p.mouse.up();
   ok(await p.evaluate(()=>GP.state.notes.some(n=>n.lane==='bass'&&n.step===0&&n.pitch===0) && GP.state.undo.length===1), 'move tool drags bass note to step 1 in one move');
   // resize on L11
@@ -84,8 +84,8 @@ const out=[]; const ok=(c,m)=>out.push((c?'PASS ':'FAIL ')+m);
   ok(await p.evaluate(()=>GP.state.notes.find(n=>n.lane==='bass'&&n.step===0).len===4), 'resize drag holds bass note for 4 steps');
   // velocity on L13
   await p.evaluate(()=>GP.openLevel(12)); const box13=await p.locator('#grid').boundingBox();
-  await p.mouse.click(box13.x + geo10.cw*4.5, box13.y + 24 + 38 + 19);
-  await p.click('#tools button:nth-child(3)'); await p.mouse.click(box13.x + geo10.cw*4.5, box13.y + 24 + 38 + 19);
+  await p.mouse.click(box13.x + geo10.cw*4.5, box13.y + 24 + 50 + 25);
+  await p.click('#tools button:nth-child(3)'); await p.mouse.click(box13.x + geo10.cw*4.5, box13.y + 24 + 50 + 25);
   ok(await p.evaluate(()=>GP.state.notes.find(n=>n.lane==='snare').vel===3), 'velocity tool makes snare loud');
   // mid-game screenshot: house level partially built, playing
   await p.evaluate(()=>{ GP.openLevel(13); GP.applySolution(); const s=GP.state; s.notes=s.notes.filter(n=>!(n.lane==='bass'&&n.step===14)&&!(n.lane==='hat'&&n.vel===1&&n.step>8)); s.undo=[]; GP.state.L&&0; });
