@@ -76,12 +76,12 @@
 }
 body[data-skin="ether"]{
   --font-display:"Cinzel","Times New Roman",serif; --font-logo:"UnifrakturMaguntia","Cinzel",serif;
-  --font-label:"Cinzel","Times New Roman",serif; --font-num:"VT323",ui-monospace,Menlo,monospace; --num-size:1.28em; --label-track:.2em;
+  --font-label:var(--font-body); --font-num:var(--font-body); --num-size:1em; --label-track:.14em;
   --world-base:#0a0826; --world-text:#f4f0ff; --world-ts:0 0 18px rgba(170,120,255,.75),0 2px 0 #1b1050;
   --text:#f2f0ff; --text-dim:#b9b3ea; --accent:#6ff3ff; --focus:#3ff0ff;
   --good-text:#6dff8a; --bad-text:#ff7aa8; --star:#ffe14d; --star-ts:0 0 10px rgba(255,225,77,.8),0 2px 0 #8a5a00; --star-empty:rgba(200,230,255,.28);
-  --panel-bg:linear-gradient(180deg,rgba(26,74,140,.62),rgba(8,20,58,.80));
-  --panel-rim:linear-gradient(165deg,rgba(230,252,255,.95),rgba(63,240,255,.6) 28%,rgba(150,110,255,.75) 68%,rgba(93,255,106,.65));
+  --panel-bg:linear-gradient(180deg,rgba(22,92,128,.58),rgba(5,28,48,.80));
+  --panel-rim:linear-gradient(170deg,rgba(235,253,255,.95),rgba(110,235,255,.55) 35%,rgba(150,120,255,.55) 75%,rgba(93,255,170,.55));
   --panel-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -10px 24px rgba(63,200,255,.08),0 14px 40px rgba(4,0,30,.6),0 0 22px rgba(63,200,255,.18);
   --radius-panel:18px; --radius-btn:14px; --radius-small:14px;
   --line:rgba(120,200,255,.26); --track:rgba(255,255,255,.12); --fill:linear-gradient(90deg,#3ff0ff,#c06bff,#ff6bf0);
@@ -90,7 +90,7 @@ body[data-skin="ether"]{
   --warn-bg:linear-gradient(180deg,rgba(255,180,32,.22),rgba(255,120,32,.14)); --warn-rim:linear-gradient(135deg,#ffe14d,#ff8a1f);
   --bad-bg:linear-gradient(180deg,rgba(255,61,127,.26),rgba(120,20,80,.3)); --bad-rim:linear-gradient(135deg,#ff6b9d,#c06bff); --bad-ink:#ffd6e6;
   --opt-bg:linear-gradient(180deg,#fff6b0,#ffc21a); --opt-ink:#4a2a00; --opt-rim:#fff3a0;
-  --under:linear-gradient(#0c1d4a,#081436);
+  --under:linear-gradient(#08304a,#05203a);
   --btn-bg:linear-gradient(180deg,rgba(170,240,255,.42) 0%,rgba(40,130,210,.30) 48%,rgba(6,30,74,.62) 52%,rgba(24,100,180,.42) 100%);
   --btn-rim:linear-gradient(180deg,rgba(235,253,255,.98),rgba(90,210,255,.6) 52%,rgba(160,120,255,.75));
   --btn-text:#f6f4ff; --btn-ts:0 1px 2px rgba(0,20,60,.8),0 0 8px rgba(120,220,255,.5); --btn-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -6px 10px rgba(63,240,255,.12),0 4px 14px rgba(0,10,50,.55),0 0 12px rgba(63,200,255,.25);
@@ -104,10 +104,10 @@ body[data-skin="ether"]{
   --orb-done-bg:radial-gradient(circle at 34% 28%,#fff 0 9%,rgba(255,255,255,0) 32%),radial-gradient(circle at 50% 40%,#b8ffc2,#2fd657 55%,#0a7a2a); --orb-done-rim:#c2ffcb;
   --orb-off-bg:radial-gradient(circle at 50% 30%,#4a4580,#1c1a46); --orb-off-rim:#6b66a8;
   --check-off-bg:radial-gradient(circle at 50% 30%,rgba(255,255,255,.25),rgba(255,255,255,.05)); --check-off-rim:rgba(160,180,255,.6);
-  --lane-head-bg:linear-gradient(90deg,rgba(14,44,92,.97),rgba(8,22,58,.97)); --icon-ink:#eaf6ff;
-  --dock-bg:linear-gradient(180deg,rgba(24,70,136,.82),rgba(6,16,48,.92)); --dock-edge:rgba(63,240,255,.6); --dock-shadow:0 -8px 30px rgba(80,40,200,.35);
-  --scrim:rgba(5,3,20,.62); --dialog-bg:linear-gradient(180deg,rgba(24,62,124,.97),rgba(8,16,48,.98));
-  --dialog-foot:linear-gradient(180deg,rgba(18,48,100,.98),rgba(8,16,48,.99)); --dialog-title:#f4f0ff;
+  --lane-head-bg:linear-gradient(90deg,rgba(8,46,66,.97),rgba(5,32,48,.97)); --icon-ink:#eaf6ff;
+  --dock-bg:linear-gradient(180deg,rgba(18,80,112,.82),rgba(4,24,42,.92)); --dock-edge:rgba(63,240,255,.6); --dock-shadow:0 -8px 30px rgba(80,40,200,.35);
+  --scrim:rgba(5,3,20,.62); --dialog-bg:linear-gradient(180deg,rgba(18,74,108,.97),rgba(5,26,44,.98));
+  --dialog-foot:linear-gradient(180deg,rgba(14,60,90,.98),rgba(5,26,44,.99)); --dialog-title:#f4f0ff;
   --toast-bg:linear-gradient(180deg,#efeaff,#cdc6f5); --toast-text:#1a1440;
   --title-fill:linear-gradient(180deg,#fff 0%,#e4e9ff 34%,#8790d4 50%,#f6f7ff 57%,#aab3ea 100%);
   --title-filter:drop-shadow(0 2px 0 #2a1f6b) drop-shadow(0 0 16px rgba(170,120,255,.75));
@@ -152,6 +152,12 @@ body[data-skin="ether"] .ether{display:block}
     radial-gradient(circle at 70% 78%,rgba(120,255,200,.35),rgba(0,0,0,0) 45%),
     radial-gradient(circle,rgba(255,255,255,0) 58%,rgba(255,255,255,.08) 66%,rgba(0,0,0,0) 70%);
   box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55),inset 0 0 18px rgba(160,120,255,.45),inset -6px -8px 18px rgba(63,240,255,.35),0 0 18px rgba(120,200,255,.25)}
+.ether .planet{position:absolute;left:50%;top:-22vh;width:min(70vw,620px);aspect-ratio:1;transform:translateX(-50%);border-radius:50%;opacity:.32;
+  background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.75) 0 4%,rgba(255,255,255,0) 22%),
+    radial-gradient(circle at 30% 62%,#3fe05a 0 9%,rgba(63,224,90,0) 16%),radial-gradient(circle at 62% 70%,#2fd657 0 7%,rgba(47,214,87,0) 13%),
+    radial-gradient(circle at 70% 40%,#5dff9a 0 6%,rgba(93,255,154,0) 12%),radial-gradient(circle at 45% 45%,#1f8fe0 0 45%,#0b3f8a 70%,#06163a 72%);
+  box-shadow:0 0 60px rgba(63,240,255,.55),inset -30px -30px 60px rgba(0,0,40,.6)}
+.ether .vine{position:absolute;left:-10px;top:18vh;width:120px;height:72vh;opacity:.9;filter:drop-shadow(0 0 8px rgba(93,255,106,.45))}
 .ether .lily{position:absolute;bottom:-3vh;width:min(22vw,150px);height:auto;filter:drop-shadow(0 0 10px rgba(255,107,240,.5))}
 .ether .lily.l1{left:1vw}.ether .lily.l2{right:2vw;transform:scaleX(-1) rotate(-6deg)}
 @keyframes drift{to{transform:translate(6vw,4vh) scale(1.12)}}
@@ -273,7 +279,6 @@ body[data-skin="ether"] .play-head h2{background:var(--title-fill);-webkit-backg
   text-shadow:var(--sel-ts);background:var(--sel-bg) padding-box,var(--sel-rim) border-box}
 .meta{display:flex;gap:6px;margin-left:auto;font-size:13px;flex-wrap:wrap}
 .meta span{border-radius:999px;padding:3px 10px;font-weight:800;font-variant-numeric:tabular-nums}
-body[data-skin="ether"] .meta span{font-family:var(--font-num);font-size:17px;font-weight:400;padding:1px 10px;letter-spacing:.02em}
 .lesson{display:flex;gap:8px 10px;align-items:baseline;flex-wrap:wrap;margin:10px 0 0;padding:9px 14px;border-radius:var(--radius-small);max-width:900px}
 .lesson .lt{font:900 11px/1.5 var(--font-label);letter-spacing:.16em;text-transform:uppercase;color:#fff;padding:2px 9px;border-radius:999px;border:1px solid transparent;
   text-shadow:var(--go-ts);background:var(--go-bg) padding-box,var(--go-rim) border-box}
@@ -297,12 +302,14 @@ body[data-skin="ether"] .meta span{font-family:var(--font-num);font-size:17px;fo
 .fail-banner{width:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-radius:var(--radius-small);padding:10px 12px;color:var(--bad-ink);
   background:var(--bad-bg) padding-box,var(--under) padding-box,var(--bad-rim) border-box;border:1px solid transparent;box-shadow:0 6px 18px rgba(200,40,80,.2)}
 .main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
-.grid-wrap{min-width:0}
+.grid-wrap{min-width:0;position:relative}
 .grid-scroll{display:flex;overflow-x:auto;border-radius:var(--radius-panel);position:relative;padding:0}
 .lane-heads{position:sticky;left:0;z-index:2;flex:none;width:var(--headw);border-right:1px solid var(--line);background:var(--lane-head-bg)}
 .lane-head{position:relative;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:2px 7px;border-bottom:1px solid var(--line);overflow:hidden;color:var(--text)}
 .lane-head .nm{display:flex;align-items:center;gap:6px;font-weight:900;font-size:13.5px;white-space:nowrap;color:var(--text);text-shadow:none;
   background:none;border:none;box-shadow:none;padding:0;min-height:0;text-align:left;border-radius:6px}
+.lane-head .dot{display:none;width:11px;height:11px;border-radius:50%;flex:none;background:var(--c);
+  box-shadow:0 0 7px var(--c),inset 0 1px 1px rgba(255,255,255,.8)}
 .lane-head .ico{width:24px;height:24px;flex:none;color:var(--icon-ink);filter:drop-shadow(0 1px 1px rgba(0,60,120,.25))}
 body[data-skin="ether"] .lane-head .ico{filter:drop-shadow(0 0 4px rgba(160,220,255,.6))}
 .lane-head .ms{display:flex;gap:3px}
@@ -340,7 +347,7 @@ body[data-skin="ether"] .lane-head .ico{filter:drop-shadow(0 0 4px rgba(160,220,
 .crit li.no{color:var(--text-dim)}
 .groove-total{display:flex;align-items:baseline;gap:8px;margin-top:12px;font-weight:800}
 .groove-total b{font:900 32px/1 var(--font-num);font-variant-numeric:tabular-nums;color:var(--accent)}
-body[data-skin="ether"] .groove-total b{font-weight:400;font-size:46px;text-shadow:0 0 14px rgba(63,240,255,.7)}
+body[data-skin="ether"] .groove-total b{text-shadow:0 0 14px rgba(63,240,255,.7)}
 .parts{display:flex;flex-direction:column;gap:7px;margin-top:6px}
 .part .row{display:flex;justify-content:space-between;font-size:13.5px;font-weight:800;font-variant-numeric:tabular-nums}
 .part .bar{height:9px;background:var(--track);border-radius:99px;overflow:hidden;margin:3px 0;box-shadow:inset 0 1px 2px rgba(0,0,0,.18)}
@@ -414,7 +421,6 @@ body[data-skin="ether"] .toast.bad::before{content:"error.exe";background:linear
   #btn-back,#btn-help2{min-width:44px;min-height:44px;padding:4px 12px}
   .meta{width:100%;margin-left:0;gap:4px}
   .meta span{font-size:12px;padding:2px 8px}
-  body[data-skin="ether"] .meta span{font-size:16px}
   .lesson{padding:7px 12px;margin-top:8px}
   .lesson b{font-size:15px}
   .intro{font-size:14px;margin:8px 0;padding:8px 12px}
@@ -431,9 +437,12 @@ body[data-skin="ether"] .toast.bad::before{content:"error.exe";background:linear
     -webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4)}
   .dock button{flex:1 1 0;min-width:0;min-height:52px;padding:6px 4px;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .dock .lbl{display:none}
-  .dock #btn-play{flex:1.25 1 0}
+  .dock #btn-play{flex:1.25 1 0;min-width:0}
   .dock #btn-undo,.dock #btn-redo,.dock #btn-tool{flex:.8 1 0}
   .dock #btn-goals{flex:2 1 0}
+  body[data-skin="ether"] .dock #btn-undo,body[data-skin="ether"] .dock #btn-redo,body[data-skin="ether"] .dock #btn-tool{flex:0 0 48px;width:48px;height:48px;min-height:48px;align-self:center;border-radius:50%}
+  body[data-skin="ether"] .dock #btn-play,body[data-skin="ether"] .dock #btn-goals{border-radius:999px;flex:1 1 0}
+  body[data-skin="ether"] .dock #btn-goals{flex:1.3 1 0}
   .lane-head{padding:2px 4px}
   .lane-head .nm{font-size:11px;gap:3px}
   .lane-head .ico{width:18px;height:18px}
@@ -448,12 +457,37 @@ body[data-skin="ether"] .toast.bad::before{content:"error.exe";background:linear
   .level-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .lvl-card{min-height:150px}
   .ether .castle{bottom:10vh}
+  .ether .vine{width:70px;opacity:.7}
   .ether .globe{width:96px;height:96px}
   .ether .cd{width:160px;height:160px}
   .skin-pick button{min-width:0;flex:1 1 0}
 }
 body[data-screen="title"] .logo{visibility:hidden}
-/* Ether: board-specific treatments */
+/* Ether: board-specific treatments (the centre game screen) */
+body[data-skin="ether"] #screen-play .lesson b,body[data-skin="ether"] .lvl-card .t{font-family:var(--font-body);font-weight:900}
+body[data-skin="ether"] .badge{color:#fff;text-shadow:var(--btn-ts);background:var(--btn-bg) padding-box,var(--btn-rim) border-box;box-shadow:var(--btn-shadow);padding:5px 12px}
+body[data-skin="ether"] .intro{position:relative;padding-left:50px}
+body[data-skin="ether"] .intro::before{content:"";position:absolute;left:14px;top:50%;width:24px;height:24px;transform:translateY(-50%);
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3ClinearGradient id='c' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23fff'/%3E%3Cstop offset='.45' stop-color='%23dfe8ff'/%3E%3Cstop offset='.55' stop-color='%237c8ad0'/%3E%3Cstop offset='1' stop-color='%23eef2ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M12 0C12.8 8 16 11.2 24 12C16 12.8 12.8 16 12 24C11.2 16 8 12.8 0 12C8 11.2 11.2 8 12 0Z' fill='url(%23c)'/%3E%3C/svg%3E") center/contain no-repeat;
+  filter:drop-shadow(0 0 6px rgba(160,220,255,.8))}
+body[data-skin="ether"] .lane-head .ico{display:none}
+body[data-skin="ether"] .lane-head .dot{display:inline-block}
+body[data-skin="ether"] .lane-head .ms button{width:24px;height:24px;min-height:24px;padding:0;border-radius:50%;font-size:10.5px}
+body[data-skin="ether"] .grid-wrap::before,body[data-skin="ether"] .grid-wrap::after{content:"";position:absolute;z-index:3;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.95) 0 8%,rgba(255,255,255,.15) 20%,rgba(255,255,255,0) 45%);
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6),inset 0 0 14px rgba(160,120,255,.5),inset -5px -6px 14px rgba(63,240,255,.4)}
+body[data-skin="ether"] .grid-wrap::before{width:44px;height:44px;right:-14px;top:-16px}
+body[data-skin="ether"] .grid-wrap::after{width:26px;height:26px;left:-12px;bottom:-12px}
+@media (min-width:601px){
+  body[data-skin="ether"] #screen-play{padding:18px;border-radius:32px;border:2px solid transparent;position:relative;
+    background:linear-gradient(180deg,rgba(14,60,96,.42),rgba(4,16,40,.55)) padding-box,var(--panel-rim) border-box;
+    box-shadow:inset 0 0 0 7px rgba(140,230,255,.08),inset 0 2px 0 rgba(255,255,255,.45),0 0 44px rgba(63,240,255,.22),0 30px 80px rgba(0,0,30,.55)}
+  body[data-skin="ether"] #screen-play::before,body[data-skin="ether"] #screen-play::after{content:"";position:absolute;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.95) 0 8%,rgba(255,255,255,.15) 20%,rgba(255,255,255,0) 45%);
+    box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6),inset 0 0 16px rgba(160,120,255,.5),inset -6px -8px 16px rgba(63,240,255,.4)}
+  body[data-skin="ether"] #screen-play::before{width:58px;height:58px;left:-22px;top:120px}
+  body[data-skin="ether"] #screen-play::after{width:40px;height:40px;right:-16px;top:-14px}
+}
 body[data-skin="ether"] #btn-play.playing{animation:pulse 1.1s ease-in-out infinite}
 @keyframes pulse{50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 0 30px rgba(80,255,120,.85),0 4px 14px rgba(0,40,20,.5)}}
 body[data-skin="ether"] .grid-scroll{border-width:3px;
@@ -509,12 +543,23 @@ body.rm .sky .bubbles,body.rm .ether .fly{display:none}
       <linearGradient id="morpho" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" stop-color="#bdf6ff"/><stop offset=".4" stop-color="#3ff0ff"/><stop offset=".75" stop-color="#3b6cff"/><stop offset="1" stop-color="#1a1a8a"/></linearGradient>
       <radialGradient id="lilyPetal" cx=".5" cy=".9" r="1"><stop offset="0" stop-color="#fff0fb"/><stop offset=".55" stop-color="#ff8ad8"/><stop offset="1" stop-color="#d62fa8"/></radialGradient>
+      <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b8ffb0"/><stop offset=".5" stop-color="#3fe05a"/><stop offset="1" stop-color="#0d8a3a"/></linearGradient>
       <linearGradient id="spire" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="#2c1c70"/><stop offset="1" stop-color="#0b0726"/></linearGradient>
     </defs>
   </svg>
   <div class="aurora a1"></div><div class="aurora a2"></div><div class="aurora a3"></div><div class="aurora a4"></div>
   <div id="orbs"></div>
+  <div class="planet"></div>
+  <svg class="vine" viewBox="0 0 140 600" fill="none">
+    <path d="M10 600 C 60 520 20 470 70 410 S 40 300 90 250 S 60 140 110 90 S 90 30 120 0" stroke="url(#leaf)" stroke-width="7" stroke-linecap="round"/>
+    <path d="M70 410 C 100 400 118 380 122 352" stroke="url(#leaf)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M122 352 c-14 -2 -22 8 -16 20 c10 2 18 -8 16 -20z" fill="url(#leaf)"/>
+    <g fill="url(#leaf)" stroke="#d8ffe0" stroke-opacity=".5" stroke-width=".8">
+      <path d="M40 520 c-30 -6 -40 -30 -36 -44 c24 4 38 22 36 44z"/><path d="M58 460 c26 -14 50 -6 58 6 c-22 14 -46 10 -58 -6z"/>
+      <path d="M54 360 c-30 -4 -44 -26 -42 -40 c26 2 42 20 42 40z"/><path d="M78 280 c24 -16 48 -12 58 -2 c-20 16 -44 16 -58 2z"/>
+      <path d="M86 190 c-28 -8 -38 -32 -34 -46 c24 6 38 26 34 46z"/><path d="M104 120 c22 -16 46 -14 56 -4 c-20 16 -42 18 -56 4z"/></g>
+  </svg>
   <svg class="arcane" viewBox="0 0 200 200" fill="none" stroke-linecap="round">
     <circle cx="100" cy="100" r="96" stroke="#b78cff" stroke-width=".8"/>
     <circle cx="100" cy="100" r="90" stroke="#6ff3ff" stroke-width=".5" stroke-dasharray="1.5 3.5"/>
@@ -630,7 +675,7 @@ body.rm .sky .bubbles,body.rm .ether .fly{display:none}
         <button id="btn-check" title="Compare your beat with the target">Check</button>
         <button id="btn-reveal" title="Reveal one note of the target (costs ★★★)">Reveal a note</button>
         <button id="btn-hint" title="Show a hint">💡 Hint</button>
-        <button id="btn-reset" title="Start this level over">Reset</button>
+        <button id="btn-reset" title="Start this level over">↻ Reset</button>
         <span class="sep"></span>
         <div class="tools desk-only" id="tools" role="radiogroup" aria-label="Tools"></div>
         <span class="beat-led" id="beat-led" aria-hidden="true"></span>
@@ -1717,10 +1762,10 @@ const SKINS = {
       hatch:'rgba(11,53,86,0.10)', locked:'rgba(11,53,86,0.035)', pulse:'25,179,239', overlay:'rgba(255,255,255,0.62)', overlayText:'#0b3556' } },
   ether: { label:'Ether', themeColor:'#070616', particle:'spark', noteGlow:true,
     lanes:{ kick:'#ff3d7f', snare:'#ffb020', clap:'#ffe14d', hat:'#3ff0ff', ohat:'#5b8cff', perc:'#c06bff', bass:'#5dff6a', lead:'#ff6bf0' },
-    board:{ bgTop:'#0e3462', bgBottom:'#061430', beatShade:'rgba(110,150,255,0.06)', laneTint:0.07, homeTint:0.14,
-      laneEdge:'rgba(120,200,255,0.38)', rowEdge:'rgba(120,200,255,0.10)', bar:'#3ff0ff', barGlow:'#3ff0ff', beat:'rgba(140,200,255,0.38)', step:'rgba(140,200,255,0.12)',
-      rulerTop:'#1a4f8e', rulerBottom:'#0b2452', rulerShine:'rgba(255,255,255,0.10)', rulerBar:'#f2f8ff', rulerBeat:'#9fd8ff', rulerAnd:'#5f7bb8',
-      rulerFont:'400 19px VT323, ui-monospace, monospace', playhead:'#3ff0ff', playheadTarget:'#ff6bf0', ink:'#ffffff',
+    board:{ bgTop:'#0b3c54', bgBottom:'#04202f', beatShade:'rgba(110,220,255,0.035)', laneTint:0.045, homeTint:0.10, noteShape:'capsule',
+      laneEdge:'rgba(130,235,255,0.34)', rowEdge:'rgba(130,235,255,0.10)', bar:'#5ff6ff', barGlow:'#3ff0ff', beat:'rgba(150,235,255,0.30)', step:'rgba(150,235,255,0.13)',
+      rulerTop:'#0f4a66', rulerBottom:'#082f45', rulerShine:'rgba(255,255,255,0.10)', rulerBar:'#ffffff', rulerBeat:'#eafcff', rulerAnd:null,
+      rulerFont:'800 13px Nunito, ui-rounded, system-ui, sans-serif', playhead:'#5ff6ff', playheadTarget:'#ff6bf0', ink:'#ffffff',
       hatch:'rgba(255,255,255,0.08)', locked:'rgba(0,0,0,0.18)', pulse:'160,110,255', overlay:'rgba(7,6,22,0.62)', overlayText:'#f4f0ff' } },
 };
 let SKIN = SKINS.aero, BOARD = SKIN.board;
@@ -1751,9 +1796,9 @@ function rrPath(g, x, y, w, h, r){
 }
 /** Paint one glossy "jelly" pad: lane-colour gradient, white shine on the top half, darker rim, soft shadow. */
 function paintJelly(g, x, y, w, h, color, o){
-  const r = Math.min(9, h/2, w/2);
+  const r = BOARD.noteShape === 'capsule' ? Math.min(h, w)/2 : Math.min(9, h/2, w/2);
   g.save();
-  if (SKIN.noteGlow){ g.shadowColor = color; g.shadowBlur = 9; g.shadowOffsetY = 0; }
+  if (SKIN.noteGlow){ g.shadowColor = color; g.shadowBlur = 7; g.shadowOffsetY = 0; }
   else { g.shadowColor = 'rgba(0,60,120,0.30)'; g.shadowBlur = 5; g.shadowOffsetY = 2; }
   rrPath(g, x, y, w, h, r);
   const body = g.createLinearGradient(0, y, 0, y + h);
@@ -1786,7 +1831,7 @@ function jelly(x, y, w, h, color, o, scale){
   const sc = scale || 1, cx = x + w/2, cy = y + h/2, W = (w + m*2)*sc, H = (h + m*2)*sc;
   g2.save(); g2.globalAlpha = o.alpha == null ? 1 : o.alpha;
   g2.drawImage(sp, cx - W/2, cy - H/2, W, H);
-  if (o.glow > 0){ rrPath(g2, cx - w*sc/2, cy - h*sc/2, w*sc, h*sc, Math.min(9, h/2, w/2)*sc); g2.fillStyle = `rgba(255,255,255,${0.55*o.glow})`; g2.fill(); }
+  if (o.glow > 0){ rrPath(g2, cx - w*sc/2, cy - h*sc/2, w*sc, h*sc, (BOARD.noteShape === 'capsule' ? Math.min(h, w)/2 : Math.min(9, h/2, w/2))*sc); g2.fillStyle = `rgba(255,255,255,${0.55*o.glow})`; g2.fill(); }
   g2.restore();
   return {x: cx - w*sc/2, y: cy - h*sc/2, w: w*sc, h: h*sc};
 }
@@ -1797,6 +1842,11 @@ function drawNote(n, opts){
   const pad = 3;
   let x = n.step*cw + pad, w = n.len*cw - pad*2, h = r.h - pad*2, y = r.y + pad;
   if (!lp.pitched){ const hf = [0, 0.5, 0.74, 0.96][n.vel]; const nh = (r.h - pad*2)*hf; y = r.y + (r.h - nh)/2; h = nh; }
+  if (BOARD.noteShape === 'capsule'){   // Ether: narrow candy capsules centred in the step (long notes stay long)
+    if (!lp.pitched){ const hf = [0, 0.52, 0.7, 0.86][n.vel]; h = r.h*hf; y = r.y + (r.h - h)/2; }
+    else { h = r.h - 7; y = r.y + 3.5; }
+    if (n.len === 1){ const cwid = Math.max(9, Math.min(22, cw*0.5)); x = n.step*cw + (cw - cwid)/2; w = cwid; }
+  }
   // pop-in when placed, and a bounce when the playhead hits it
   let sc = 1;
   const born = S.born.get(k);
@@ -1806,7 +1856,8 @@ function drawNote(n, opts){
   ({x, y, w, h} = jelly(x, y, w, h, lp.color, {alpha: (n.vel === 1 ? 0.6 : 1)*dim, soft: n.vel === 1, loud: n.vel === 3, glow}, sc));
   if (opts && opts.pinned){   // notes that came with the loop: a small white rivet
     g2.fillStyle = '#fff'; g2.strokeStyle = SKIN.noteGlow ? '#1a1440' : BOARD.ink; g2.lineWidth = 1.2;
-    g2.beginPath(); g2.arc(x + 6.5, y + h - 6.5, 2.6, 0, Math.PI*2); g2.fill(); g2.stroke();
+    const cap = BOARD.noteShape === 'capsule', px = cap ? x + w/2 : x + 6.5, py = cap ? y + h - Math.min(w, h)/2 : y + h - 6.5;
+    g2.beginPath(); g2.arc(px, py, cap ? Math.min(3, w/4) : 2.6, 0, Math.PI*2); g2.fill(); g2.stroke();
   }
   if (opts && opts.selected){ g2.strokeStyle = BOARD.ink; g2.lineWidth = 2.5; roundRect(x-2, y-2, w+4, h+4, 10); g2.stroke(); }
   if (lp.pitched && n.len > 1 && S.tool === 'resize'){ g2.fillStyle = 'rgba(255,255,255,.95)'; g2.fillRect(x + w - 5, y + 4, 2, h - 8); }
@@ -1882,7 +1933,7 @@ function drawGrid(){
     if (s % spb === 0){
       g2.fillStyle = s % (spb*4) === 0 ? B.rulerBar : B.rulerBeat;
       g2.fillText(L.bars > 1 && s % (spb*4) === 0 ? `${bar}.${beatIn}` : `${beatIn}`, s*cw + 5, R/2 + 1);
-    } else if (cw >= 26 && s % spb === spb/2){ g2.fillStyle = B.rulerAnd; g2.fillText('&', s*cw + 5, R/2 + 1); }
+    } else if (B.rulerAnd && cw >= 26 && s % spb === spb/2){ g2.fillStyle = B.rulerAnd; g2.fillText('&', s*cw + 5, R/2 + 1); }
   }
   if (Seq.playing && S.playSource === 'target'){
     for (const [s, t] of S.colFlash){ const k = 1 - (now - t)/280; if (k <= 0){ S.colFlash.delete(s); continue; }
@@ -2285,7 +2336,7 @@ const UI = {
       d.className = 'lane-head' + (lp.pitched ? ' pitched' : '') + (audible(lane) ? '' : ' muted');
       d.style.height = h + 'px';
       const locked = L.locked.includes(lane);
-      d.innerHTML = `<button class="nm" title="${esc(lp.desc)} (click to hear it)">${laneIcon(lane)}${esc(isPhone() ? lp.short : lp.name)}${locked ? ' 🔒' : ''}</button>
+      d.innerHTML = `<button class="nm" title="${esc(lp.desc)} (click to hear it)"><span class="dot" style="--c:${lp.color}"></span>${laneIcon(lane)}${esc(isPhone() ? lp.short : lp.name)}${locked ? ' 🔒' : ''}</button>
         <div class="ms"><button aria-pressed="${S.mute.has(lane)}" aria-label="Mute ${esc(lp.name)}" title="Mute">M</button><button aria-pressed="${S.solo.has(lane)}" aria-label="Solo ${esc(lp.name)}" title="Solo: hear only this lane">S</button></div>
         <span class="tag">${S.mute.has(lane) ? 'muted' : S.solo.has(lane) ? 'solo' : !audible(lane) ? 'silent (solo)' : ''}</span>`;
       if (lp.pitched){

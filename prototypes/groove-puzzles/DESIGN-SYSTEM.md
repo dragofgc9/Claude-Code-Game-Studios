@@ -17,11 +17,11 @@ sprites and redraws.
 ## Tokens (CSS, on `:root`, overridden in `body[data-skin="ether"]`)
 | Group | Tokens | Daylight | Ether |
 |---|---|---|---|
-| Type | `--font-body` `--font-display` `--font-logo` `--font-label` `--font-num` | Nunito everywhere | Nunito body · Cinzel display and labels · UnifrakturMaguntia logo · VT323 numerals |
+| Type | `--font-body` `--font-display` `--font-logo` `--font-label` `--font-num` | Nunito everywhere | Clean white sans in-game (as on the board's game screen) · Cinzel for chapter and dialog titles · UnifrakturMaguntia logo |
 | World text | `--world-text` `--world-ts` | white, blue drop shadow | white, violet glow |
 | Surface text | `--text` `--text-dim` `--accent` `--focus` | ink #0b3556, aqua-deep accent | #f2f0ff, cyan #6ff3ff accent |
 | Status | `--good-text` `--bad-text` `--star` `--star-empty` | green / berry / sun | neon green / pink / gold glow |
-| Glass panel | `--panel-bg` `--panel-rim` `--panel-shadow` `--radius-panel` | white glass, white rim, 20px | teal-navy glass, iridescent rim (cyan, violet, green), 18px |
+| Glass panel | `--panel-bg` `--panel-rim` `--panel-shadow` `--radius-panel` | white glass, white rim, 20px | deep teal glass, cyan-white to violet rim, 18px |
 | Buttons | `--btn-*` (base) `--sel-*` (selected) `--go-*` (Play, Finish) `--busy-*` (playing) | split-gloss pills | liquid glass, 14px corners, cyan-white rims; Play/Stop stay green (Stop pulses) |
 | Orbs | `--orb-bg` `--orb-done-bg` `--orb-off-bg` `--check-off-*` | aqua / lime spheres | iridescent conic orb / neon-green orb |
 | Boxes | `--tip-*` `--ok-*` `--warn-*` `--bad-*` `--opt-*` `--under` | pale tints | translucent tints over a solid `--under` layer, so the rim never shows through |
@@ -30,8 +30,24 @@ sprites and redraws.
 **Rim technique:** every glass surface is `background: <fill> padding-box, <rim> border-box;
 border: 1px solid transparent`. That gives gradient borders with rounded corners in both skins.
 
+## Ether: the board's centre game screen
+Ether reproduces the game mockup at the centre of the UI reference board, drawn in code:
+- **The level** sits in one glass slab with a thick translucent rim and glass bubbles on its corners
+  (desktop and tablet; phones go edge to edge).
+- **Header:** a glass back button, the level name in a glass capsule, and "Genre Brief" in a dark glass pill.
+- **Chips and panels:** dark glass chips; the brief panel leads with a chrome four-point sparkle.
+- **Grid:** deep teal board with cyan lines, white beat numbers, no "&" marks, and one glowing cyan bar
+  line; a thick glossy glass frame with bubbles.
+- **Lane heads:** a coloured dot, the name, a gold lock, and round M and S glass buttons.
+- **Notes:** narrow candy capsules centred in each step, with a small dot (long bass and lead notes
+  stay long).
+- **Dock:** a green Stop capsule (it pulses while playing), round glass Undo, Redo and tool buttons,
+  and a Goals pill.
+- **Surroundings:** purple clouds, green aurora, a glowing planet behind the header, green leafy vines,
+  pink lilies, glass bubbles and blue butterflies.
+
 ## Canvas (`SKINS` table in the script)
-`lanes` (eight lane colours), `particle` (`bubble` or `spark`), `noteGlow`, and `board`
+`lanes` (eight lane colours), `particle` (`bubble` or `spark`), `noteGlow`, `board.noteShape` (`capsule` in Ether), and `board`
 (background, lane tints, grid lines, bar glow, ruler font and colours, playhead, ink,
 hatching, overlays). Notes are pre-painted "jelly" sprites (gradient, top shine, rim; Ether
 adds a lane-coloured neon glow) and cached per colour, size and loudness.
